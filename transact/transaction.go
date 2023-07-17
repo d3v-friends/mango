@@ -1,5 +1,12 @@
 package transact
 
+import (
+	"fmt"
+	"github.com/d3v-friends/mango/mvars"
+	"go.mongodb.org/mongo-driver/bson"
+	"reflect"
+)
+
 //
 //import (
 //	"context"
@@ -100,7 +107,7 @@ package transact
 //	sessionFindAndLock struct {
 //		dbNm   string
 //		colNm  string
-//		filter *bson.M
+//		filter *bson.Filter
 //	}
 //)
 //
@@ -114,7 +121,7 @@ package transact
 //
 //		var single *mongo.SingleResult
 //		data.filter = addInTrxFilter(true, data.filter)
-//		if single = col.FindOneAndUpdate(x, data.filter, &bson.M{
+//		if single = col.FindOneAndUpdate(x, data.filter, &bson.Filter{
 //			mvars.FInTrx: false,
 //		}); single.Err() != nil {
 //			err = single.Err()
@@ -138,7 +145,7 @@ package transact
 //	return
 //}
 //
-//func (x *SessionContext) UpdateOne(filter *bson.M, update any, iOpt ...*options.FindOneAndUpdateOptions) (err error) {
+//func (x *SessionContext) UpdateOne(filter *bson.Filter, update any, iOpt ...*options.FindOneAndUpdateOptions) (err error) {
 //	opt := fnParams.Get(iOpt)
 //
 //	return
@@ -155,15 +162,15 @@ package transact
 //func FindOneAndLock(
 //	sctx *SessionContext,
 //	model models.IfModel,
-//	filter *bson.M,
-//	iUpdate ...*bson.M,
+//	filter *bson.Filter,
+//	iUpdate ...*bson.Filter,
 //) (err error) {
 //	col := sctx.db.Collection(model.CollectionNm())
 //
-//	var apFilter *bson.M
+//	var apFilter *bson.Filter
 //	apFilter = addInTrxFilter(false, filter)
 //
-//	var apUpdate *bson.M
+//	var apUpdate *bson.Filter
 //	if apUpdate, err = addInTrxUpdate(true, iUpdate); err != nil {
 //		return
 //	}
@@ -190,40 +197,41 @@ package transact
 //	return
 //}
 //
-//func addInTrxFilter(value bool, iFilter *bson.M) (res *bson.M) {
-//	(*iFilter)[mvars.FInTrx] = value
-//	res = iFilter
-//	return
-//}
-//
-//func addInTrxUpdate(value bool, iUpdate []*bson.M) (res *bson.M, err error) {
-//	var update *bson.M
-//	if len(iUpdate) == 0 {
-//		update = &bson.M{}
-//	} else {
-//		update = iUpdate[0]
-//	}
-//
-//	v, has := (*update)["$set"]
-//	if has {
-//		switch p := v.(type) {
-//		case *bson.M:
-//			(*p)[mvars.FInTrx] = value
-//		case *bson.D:
-//			*p = append(*p, bson.E{
-//				Key:   mvars.FInTrx,
-//				Value: value,
-//			})
-//		default:
-//			err = fmt.Errorf("update filter value is not supported: type=%s", reflect.TypeOf(p).Name())
-//			return
-//		}
-//	} else {
-//		(*update)["$set"] = &bson.M{
-//			mvars.FInTrx: value,
-//		}
-//	}
-//
-//	res = update
-//	return
-//}
+
+func addInTrxFilter(value bool, iFilter *bson.Filter) (res *bson.Filter) {
+	(*iFilter)[mvars.FInTrx] = value
+	res = iFilter
+	return
+}
+
+func addInTrxUpdate(value bool, iUpdate []*bson.Filter) (res *bson.Filter, err error) {
+	var update *bson.Filter
+	if len(iUpdate) == 0 {
+		update = &bson.Filter{}
+	} else {
+		update = iUpdate[0]
+	}
+
+	v, has := (*update)["$set"]
+	if has {
+		switch p := v.(type) {
+		case *bson.Filter:
+			(*p)[mvars.FInTrx] = value
+		case *bson.D:
+			*p = append(*p, bson.E{
+				Key:   mvars.FInTrx,
+				Value: value,
+			})
+		default:
+			err = fmt.Errorf("update filter value is not supported: type=%s", reflect.TypeOf(p).Name())
+			return
+		}
+	} else {
+		(*update)["$set"] = &bson.Filter{
+			mvars.FInTrx: value,
+		}
+	}
+
+	res = update
+	return
+}

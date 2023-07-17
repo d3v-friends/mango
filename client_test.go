@@ -67,14 +67,14 @@ func TestClient(test *testing.T) {
 		//
 		//if err = transact.Transaction(ctx, client.database, func(sctx *transact.SessionContext, db *mongo.Database) (fnErr error) {
 		//	loadModel := &testModel{}
-		//	if err = transact.FindOneAndLock(sctx, loadModel, &bson.M{
+		//	if err = transact.FindOneAndLock(sctx, loadModel, &bson.Filter{
 		//		mvars.FID: insertModel.Id,
 		//	}); err != nil {
 		//		return
 		//	}
 		//
 		//	var count int64
-		//	if count, err = db.Collection(colNm).CountDocuments(ctx, &bson.M{
+		//	if count, err = db.Collection(colNm).CountDocuments(ctx, &bson.Filter{
 		//		mvars.FID:    insertModel.Id,
 		//		mvars.FInTrx: true,
 		//	}); err != nil {
@@ -93,7 +93,7 @@ func TestClient(test *testing.T) {
 		//
 		//// inTrx 변경된것 확인하기
 		//var count int64
-		//if count, err = client.Database().Collection(colNm).CountDocuments(ctx, &bson.M{
+		//if count, err = client.Database().Collection(colNm).CountDocuments(ctx, &bson.Filter{
 		//	mvars.FID:    insertModel.Id,
 		//	mvars.FInTrx: false,
 		//}); err != nil {
