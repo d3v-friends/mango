@@ -3,6 +3,8 @@ package migrate
 import (
 	"context"
 	"fmt"
+	"github.com/d3v-friends/mango/models"
+	"github.com/d3v-friends/mango/mvars"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -12,7 +14,7 @@ import (
 type (
 	docMango struct {
 		Id        primitive.ObjectID `bson:"_id"`
-		IsRunning bool               `bson:"isRunning"`
+		InTrx     bool               `bson:"inTrx"`
 		Migrate   fMigrateList       `bson:"migrate"`
 		CreatedAt time.Time          `bson:"createdAt"`
 		UpdatedAt time.Time          `bson:"updatedAt"`
@@ -25,14 +27,6 @@ type (
 	}
 
 	fMigrateList map[string][]fMigrate
-
-	IfMigrateModel interface {
-		CollectionNm() string
-		MigrateList() FnMigrateList
-	}
-
-	FnMigrate     func(ctx context.Context, collection *mongo.Collection) (migrationNm string, err error)
-	FnMigrateList []FnMigrate
 )
 
 const (
@@ -43,14 +37,14 @@ func (x *docMango) CollectionNm() string {
 	return colMango
 }
 
-func (x *docMango) MigrateList() FnMigrateList {
-	return FnMigrateList{}
+func (x *docMango) MigrateList() models.FnMigrateList {
+	return models.FnMigrateList{}
 }
 
 func (x *docMango) RunMigrate(
 	ctx context.Context,
 	db *mongo.Database,
-	model IfMigrateModel,
+	model models.IfMigrateModel,
 ) (err error) {
 
 	lsMigrateFn := model.MigrateList()
@@ -74,11 +68,11 @@ func (x *docMango) RunMigrate(
 		if _, err = colMigrate.UpdateOne(
 			ctx,
 			&bson.M{
-				"_id":       primitive.NilObjectID,
-				"isRunning": true,
+				mvars.FID:    primitive.NilObjectID,
+				mvars.FInTrx: true,
 			},
 			&bson.M{
-				"$push": &bson.M{
+				mvars.OPush: &bson.M{
 					fmt.Sprintf("migrate.%s", model.CollectionNm()): &fMigrate{
 						Id:        i,
 						Name:      migNm,
@@ -97,7 +91,7 @@ func (x *docMango) RunMigrate(
 func V1(
 	ctx context.Context,
 	db *mongo.Database,
-	models ...IfMigrateModel,
+	models ...models.IfMigrateModel,
 ) (err error) {
 	var doc *docMango
 	if doc, err = lockDocMangoV1(ctx, db); err != nil {
@@ -128,13 +122,13 @@ func unlockDocMangoV1(
 	if _, err = col.UpdateOne(
 		ctx,
 		&bson.M{
-			"_id":       primitive.NilObjectID,
-			"isRunning": true,
+			mvars.FID:    primitive.NilObjectID,
+			mvars.FInTrx: true,
 		},
 		&bson.M{
-			"$set": &bson.M{
-				"isRunning": false,
-				"updatedAt": time.Now(),
+			mvars.OSet: &bson.M{
+				mvars.FInTrx:     false,
+				mvars.FUpdatedAt: time.Now(),
 			},
 		},
 	); err != nil {
@@ -158,7 +152,7 @@ func lockDocMangoV1(
 	if count == 0 {
 		doc = &docMango{
 			Id:        primitive.NilObjectID,
-			IsRunning: true,
+			InTrx:     true,
 			Migrate:   make(fMigrateList),
 			CreatedAt: now,
 			UpdatedAt: now,
@@ -174,12 +168,12 @@ func lockDocMangoV1(
 		if res = col.FindOneAndUpdate(
 			ctx,
 			&bson.M{
-				"_id":       primitive.NilObjectID,
-				"isRunning": false,
+				mvars.FID:    primitive.NilObjectID,
+				mvars.FInTrx: false,
 			},
 			&bson.M{
-				"$set": &bson.M{
-					"isRunning": true,
+				mvars.OSet: &bson.M{
+					mvars.FInTrx: true,
 				},
 			},
 		); res.Err() != nil {

@@ -3,7 +3,8 @@ package mango
 import (
 	"context"
 	"fmt"
-	"github.com/d3v-friends/mango/migrate"
+	"github.com/d3v-friends/mango/models"
+	"github.com/d3v-friends/mango/mvars"
 	"github.com/d3v-friends/pure-go/fnEnv"
 	"github.com/d3v-friends/pure-go/fnReflect"
 	"go.mongodb.org/mongo-driver/bson"
@@ -34,7 +35,7 @@ func TestClient(test *testing.T) {
 
 		var count int64
 		if count, err = client.database.Collection("mango").CountDocuments(ctx, &bson.M{
-			"_id": primitive.NilObjectID,
+			mvars.FID: primitive.NilObjectID,
 			"migrate.testModel": &bson.M{
 				"$exist": true,
 			},
@@ -45,6 +46,63 @@ func TestClient(test *testing.T) {
 		if count == 0 {
 			t.Fatal(fmt.Errorf("not found migrate data"))
 		}
+	})
+
+	test.Run("test transaction", func(t *testing.T) {
+		//ctx := context.TODO()
+		//now := time.Now()
+		//
+		//insertModel := &testModel{
+		//	Id:        primitive.NewObjectID(),
+		//	Name:      fmt.Sprintf("%s", primitive.NewObjectID().Hex()),
+		//	CreatedAt: now,
+		//	UpdatedAt: now,
+		//}
+		//
+		//colNm := insertModel.CollectionNm()
+		//
+		//if _, err = client.Database().Collection(insertModel.CollectionNm()).InsertOne(ctx, insertModel); err != nil {
+		//	t.Fatal(err)
+		//}
+		//
+		//if err = transact.Transaction(ctx, client.database, func(sctx *transact.SessionContext, db *mongo.Database) (fnErr error) {
+		//	loadModel := &testModel{}
+		//	if err = transact.FindOneAndLock(sctx, loadModel, &bson.M{
+		//		mvars.FID: insertModel.Id,
+		//	}); err != nil {
+		//		return
+		//	}
+		//
+		//	var count int64
+		//	if count, err = db.Collection(colNm).CountDocuments(ctx, &bson.M{
+		//		mvars.FID:    insertModel.Id,
+		//		mvars.FInTrx: true,
+		//	}); err != nil {
+		//		return
+		//	}
+		//
+		//	if count != 1 {
+		//		err = fmt.Errorf("inTrx model is not found: inTrx=%t", true)
+		//		return
+		//	}
+		//
+		//	return
+		//}); err != nil {
+		//	t.Fatal(err)
+		//}
+		//
+		//// inTrx 변경된것 확인하기
+		//var count int64
+		//if count, err = client.Database().Collection(colNm).CountDocuments(ctx, &bson.M{
+		//	mvars.FID:    insertModel.Id,
+		//	mvars.FInTrx: false,
+		//}); err != nil {
+		//	t.Fatal(err)
+		//}
+		//
+		//if count != 1 {
+		//	err = fmt.Errorf("intrx model is not fount: inTrx=%t", false)
+		//}
 	})
 
 }
@@ -60,8 +118,8 @@ func (x *testModel) CollectionNm() string {
 	return "testModel"
 }
 
-func (x *testModel) MigrateList() migrate.FnMigrateList {
-	return migrate.FnMigrateList{
+func (x *testModel) MigrateList() models.FnMigrateList {
+	return models.FnMigrateList{
 		func(ctx context.Context, collection *mongo.Collection) (migrationNm string, err error) {
 			migrationNm = "indexing"
 			_, err = collection.Indexes().CreateOne(

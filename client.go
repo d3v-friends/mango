@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/d3v-friends/mango/migrate"
+	"github.com/d3v-friends/mango/models"
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -40,9 +41,13 @@ func (x *Client) Database() *mongo.Database {
 	return x.database
 }
 
+func (x *Client) Client() *mongo.Client {
+	return x.client
+}
+
 func (x *Client) Migrate(
 	ctx context.Context,
-	models ...migrate.IfMigrateModel,
+	models ...models.IfMigrateModel,
 ) error {
 	return migrate.V1(ctx, x.database, models...)
 }
