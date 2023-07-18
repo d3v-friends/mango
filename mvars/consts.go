@@ -7,6 +7,7 @@ const (
 	FCreatedAt = "createdAt"
 	FUpdatedAt = "updatedAt"
 	FDeletedAt = "deletedAt"
+	FErrors    = "errors"
 )
 
 const (

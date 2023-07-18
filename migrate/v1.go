@@ -33,11 +33,11 @@ const (
 	colMango = "mango"
 )
 
-func (x *docMango) CollectionNm() string {
+func (x *docMango) GetCollectionNm() string {
 	return colMango
 }
 
-func (x *docMango) MigrateList() models.FnMigrateList {
+func (x *docMango) GetMigrateList() models.FnMigrateList {
 	return models.FnMigrateList{}
 }
 
@@ -47,15 +47,15 @@ func (x *docMango) RunMigrate(
 	model models.IfMigrateModel,
 ) (err error) {
 
-	lsMigrateFn := model.MigrateList()
+	lsMigrateFn := model.GetMigrateList()
 
-	lsDone, has := x.Migrate[model.CollectionNm()]
+	lsDone, has := x.Migrate[model.GetCollectionNm()]
 	idx := 0
 	if has {
 		idx = len(lsDone) - 1
 	}
 
-	colModel := db.Collection(model.CollectionNm())
+	colModel := db.Collection(model.GetCollectionNm())
 	colMigrate := db.Collection(colMango)
 
 	for i := idx; i < len(lsMigrateFn); i++ {
@@ -73,7 +73,7 @@ func (x *docMango) RunMigrate(
 			},
 			&bson.M{
 				mvars.OPush: &bson.M{
-					fmt.Sprintf("migrate.%s", model.CollectionNm()): &fMigrate{
+					fmt.Sprintf("migrate.%s", model.GetCollectionNm()): &fMigrate{
 						Id:        i,
 						Name:      migNm,
 						CreatedAt: time.Now(),

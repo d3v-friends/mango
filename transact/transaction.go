@@ -1,12 +1,5 @@
 package transact
 
-import (
-	"fmt"
-	"github.com/d3v-friends/mango/mvars"
-	"go.mongodb.org/mongo-driver/bson"
-	"reflect"
-)
-
 //
 //import (
 //	"context"
@@ -100,14 +93,14 @@ import (
 //	}
 //
 //	prevModel struct {
-//		Id    primitive.ObjectID
+//		id    primitive.ObjectID
 //		Model any
 //	}
 //
 //	sessionFindAndLock struct {
 //		dbNm   string
 //		colNm  string
-//		filter *bson.Filter
+//		filter *bson.GetFilter
 //	}
 //)
 //
@@ -121,7 +114,7 @@ import (
 //
 //		var single *mongo.SingleResult
 //		data.filter = addInTrxFilter(true, data.filter)
-//		if single = col.FindOneAndUpdate(x, data.filter, &bson.Filter{
+//		if single = col.FindOneAndUpdate(x, data.filter, &bson.GetFilter{
 //			mvars.FInTrx: false,
 //		}); single.Err() != nil {
 //			err = single.Err()
@@ -135,7 +128,7 @@ import (
 //func (x *SessionContext) InsertOne(model models.IfModel, iOpt ...*options.InsertOneOptions) (err error) {
 //	opt := fnParams.Get(iOpt)
 //	if _, err = x.db.
-//		Collection(model.CollectionNm()).
+//		Collection(model.GetCollectionName()).
 //		InsertOne(x.SessionContext, model, opt); err != nil {
 //		return
 //	}
@@ -145,7 +138,7 @@ import (
 //	return
 //}
 //
-//func (x *SessionContext) UpdateOne(filter *bson.Filter, update any, iOpt ...*options.FindOneAndUpdateOptions) (err error) {
+//func (x *SessionContext) UpdateOne(filter *bson.GetFilter, update any, iOpt ...*options.FindOneAndUpdateOptions) (err error) {
 //	opt := fnParams.Get(iOpt)
 //
 //	return
@@ -162,15 +155,15 @@ import (
 //func FindOneAndLock(
 //	sctx *SessionContext,
 //	model models.IfModel,
-//	filter *bson.Filter,
-//	iUpdate ...*bson.Filter,
+//	filter *bson.GetFilter,
+//	iUpdate ...*bson.GetFilter,
 //) (err error) {
-//	col := sctx.db.Collection(model.CollectionNm())
+//	col := sctx.db.Collection(model.GetCollectionName())
 //
-//	var apFilter *bson.Filter
+//	var apFilter *bson.GetFilter
 //	apFilter = addInTrxFilter(false, filter)
 //
-//	var apUpdate *bson.Filter
+//	var apUpdate *bson.GetFilter
 //	if apUpdate, err = addInTrxUpdate(true, iUpdate); err != nil {
 //		return
 //	}
@@ -190,7 +183,7 @@ import (
 //	}
 //
 //	sctx.trxData = append(sctx.trxData, &sessionFindAndLock{
-//		colNm:  model.CollectionNm(),
+//		colNm:  model.GetCollectionName(),
 //		filter: filter,
 //	})
 //
@@ -198,40 +191,40 @@ import (
 //}
 //
 
-func addInTrxFilter(value bool, iFilter *bson.Filter) (res *bson.Filter) {
-	(*iFilter)[mvars.FInTrx] = value
-	res = iFilter
-	return
-}
-
-func addInTrxUpdate(value bool, iUpdate []*bson.Filter) (res *bson.Filter, err error) {
-	var update *bson.Filter
-	if len(iUpdate) == 0 {
-		update = &bson.Filter{}
-	} else {
-		update = iUpdate[0]
-	}
-
-	v, has := (*update)["$set"]
-	if has {
-		switch p := v.(type) {
-		case *bson.Filter:
-			(*p)[mvars.FInTrx] = value
-		case *bson.D:
-			*p = append(*p, bson.E{
-				Key:   mvars.FInTrx,
-				Value: value,
-			})
-		default:
-			err = fmt.Errorf("update filter value is not supported: type=%s", reflect.TypeOf(p).Name())
-			return
-		}
-	} else {
-		(*update)["$set"] = &bson.Filter{
-			mvars.FInTrx: value,
-		}
-	}
-
-	res = update
-	return
-}
+//func addInTrxFilter(value bool, iFilter *bson.Filter) (res *bson.Filter) {
+//	(*iFilter)[mvars.FInTrx] = value
+//	res = iFilter
+//	return
+//}
+//
+//func addInTrxUpdate(value bool, iUpdate []*bson.Filter) (res *bson.Filter, err error) {
+//	var update *bson.Filter
+//	if len(iUpdate) == 0 {
+//		update = &bson.Filter{}
+//	} else {
+//		update = iUpdate[0]
+//	}
+//
+//	v, has := (*update)["$set"]
+//	if has {
+//		switch p := v.(type) {
+//		case *bson.Filter:
+//			(*p)[mvars.FInTrx] = value
+//		case *bson.D:
+//			*p = append(*p, bson.E{
+//				Key:   mvars.FInTrx,
+//				Value: value,
+//			})
+//		default:
+//			err = fmt.Errorf("update filter value is not supported: type=%s", reflect.TypeOf(p).Name())
+//			return
+//		}
+//	} else {
+//		(*update)["$set"] = &bson.Filter{
+//			mvars.FInTrx: value,
+//		}
+//	}
+//
+//	res = update
+//	return
+//}

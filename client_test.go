@@ -53,29 +53,29 @@ func TestClient(test *testing.T) {
 		//now := time.Now()
 		//
 		//insertModel := &testModel{
-		//	Id:        primitive.NewObjectID(),
+		//	id:        primitive.NewObjectID(),
 		//	Name:      fmt.Sprintf("%s", primitive.NewObjectID().Hex()),
 		//	CreatedAt: now,
 		//	UpdatedAt: now,
 		//}
 		//
-		//colNm := insertModel.CollectionNm()
+		//colNm := insertModel.GetCollectionName()
 		//
-		//if _, err = client.Database().Collection(insertModel.CollectionNm()).InsertOne(ctx, insertModel); err != nil {
+		//if _, err = client.Database().Collection(insertModel.GetCollectionName()).InsertOne(ctx, insertModel); err != nil {
 		//	t.Fatal(err)
 		//}
 		//
 		//if err = transact.Transaction(ctx, client.database, func(sctx *transact.SessionContext, db *mongo.Database) (fnErr error) {
 		//	loadModel := &testModel{}
-		//	if err = transact.FindOneAndLock(sctx, loadModel, &bson.Filter{
-		//		mvars.FID: insertModel.Id,
+		//	if err = transact.FindOneAndLock(sctx, loadModel, &bson.GetFilter{
+		//		mvars.FID: insertModel.id,
 		//	}); err != nil {
 		//		return
 		//	}
 		//
 		//	var count int64
-		//	if count, err = db.Collection(colNm).CountDocuments(ctx, &bson.Filter{
-		//		mvars.FID:    insertModel.Id,
+		//	if count, err = db.Collection(colNm).CountDocuments(ctx, &bson.GetFilter{
+		//		mvars.FID:    insertModel.id,
 		//		mvars.FInTrx: true,
 		//	}); err != nil {
 		//		return
@@ -93,8 +93,8 @@ func TestClient(test *testing.T) {
 		//
 		//// inTrx 변경된것 확인하기
 		//var count int64
-		//if count, err = client.Database().Collection(colNm).CountDocuments(ctx, &bson.Filter{
-		//	mvars.FID:    insertModel.Id,
+		//if count, err = client.Database().Collection(colNm).CountDocuments(ctx, &bson.GetFilter{
+		//	mvars.FID:    insertModel.id,
 		//	mvars.FInTrx: false,
 		//}); err != nil {
 		//	t.Fatal(err)
@@ -114,11 +114,11 @@ type testModel struct {
 	UpdatedAt time.Time          `bson:"updatedAt"`
 }
 
-func (x *testModel) CollectionNm() string {
+func (x *testModel) GetCollectionNm() string {
 	return "testModel"
 }
 
-func (x *testModel) MigrateList() models.FnMigrateList {
+func (x *testModel) GetMigrateList() models.FnMigrateList {
 	return models.FnMigrateList{
 		func(ctx context.Context, collection *mongo.Collection) (migrationNm string, err error) {
 			migrationNm = "indexing"
