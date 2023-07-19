@@ -14,7 +14,7 @@ type (
 
 	IfTrxModel interface {
 		GetID() primitive.ObjectID
-		SetID(id primitive.ObjectID) primitive.ObjectID
+		SetID(id primitive.ObjectID)
 	}
 
 	IfMigrateModel interface {
