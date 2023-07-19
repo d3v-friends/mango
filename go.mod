@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/d3v-friends/pure-go v0.0.6
+	github.com/shopspring/decimal v1.3.1
 	go.mongodb.org/mongo-driver v1.12.0
 )
 
