@@ -43,33 +43,36 @@ func TestOne(test *testing.T) {
 			t.Fatalf("%+v", err)
 		}
 
-		if err = Transaction(ctx, client.Database(), TrxOne[testModel]{
-			CollectionNm: model.GetCollectionNm(),
-			Filter: bson.M{
-				mvars.FID: model.Id,
-			},
-			Fn: func(model *testModel) (update bson.M, err error) {
-				var count int64
-				if count, err = client.Database().Collection(model.GetCollectionNm()).CountDocuments(ctx, bson.M{
-					mvars.FID:    model.Id,
-					mvars.FInTrx: true,
-				}); err != nil {
-					return
-				}
+		if err = One(
+			ctx,
+			client.Database(),
+			TrxOne[testModel]{
+				CollectionNm: model.GetCollectionNm(),
+				Filter: bson.M{
+					mvars.FID: model.Id,
+				},
+				Fn: func(model *testModel) (update bson.M, err error) {
+					var count int64
+					if count, err = client.Database().Collection(model.GetCollectionNm()).CountDocuments(ctx, bson.M{
+						mvars.FID:    model.Id,
+						mvars.FInTrx: true,
+					}); err != nil {
+						return
+					}
 
-				if count != 1 {
-					err = fmt.Errorf("model is not locked")
-					return
-				}
+					if count != 1 {
+						err = fmt.Errorf("model is not locked")
+						return
+					}
 
-				update = bson.M{
-					mvars.OSet: bson.M{
-						"name": "hello",
-					},
-				}
-				return
-			},
-		}); err != nil {
+					update = bson.M{
+						mvars.OSet: bson.M{
+							"name": "hello",
+						},
+					}
+					return
+				},
+			}); err != nil {
 			t.Fatalf("%+v", err)
 		}
 	})

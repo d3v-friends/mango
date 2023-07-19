@@ -14,9 +14,9 @@ import (
 	"strings"
 )
 
-// Transaction 1개의 Document 에서의 트렌젝션
+// One 1개의 Document 에서의 트렌젝션
 // callback 함수에서 지정한 모델 이외의 데이터 조작은 최대한 지양한다
-func Transaction[MODEL any](
+func One[MODEL any](
 	ctx context.Context,
 	db *mongo.Database,
 	trxOne TrxOne[MODEL],
