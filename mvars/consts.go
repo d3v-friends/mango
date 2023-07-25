@@ -17,4 +17,5 @@ const (
 	OOr    = "$or"
 	OUnset = "$unset"
 	OPull  = "$pull"
+	ONE    = "$ne"
 )
