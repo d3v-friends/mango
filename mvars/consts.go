@@ -15,4 +15,5 @@ const (
 	OPush  = "$push"
 	OExist = "$exist"
 	OOr    = "$or"
+	OUnset = "$unset"
 )
