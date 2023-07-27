@@ -11,11 +11,21 @@ const (
 )
 
 const (
-	OSet   = "$set"
-	OPush  = "$push"
-	OExist = "$exist"
-	OOr    = "$or"
-	OUnset = "$unset"
-	OPull  = "$pull"
-	ONE    = "$ne"
+	OSet         = "$set"
+	OPush        = "$push"
+	OExist       = "$exist"
+	OOr          = "$or"
+	OUnset       = "$unset"
+	OPull        = "$pull"
+	ONE          = "$ne"
+	OMatch       = "$match"
+	OLookUp      = "$lookUp"
+	OReplaceRoot = "$replaceRoot"
+	OType        = "$type"
+	ONot         = "$not"
+)
+
+const (
+	VArrayType  = "array"
+	VObjectType = "object"
 )

@@ -24,4 +24,32 @@ type (
 
 	FnMigrate     func(ctx context.Context, collection *mongo.Collection) (migrationNm string, err error)
 	FnMigrateList []FnMigrate
+
+	IfFilter interface {
+		GetCollectionNm() string
+		GetFilter() any
+	}
 )
+
+type iFilter struct {
+	CollectionNm string
+	Filter       any
+}
+
+func NewFilter(
+	collectionNm string,
+	filter any,
+) IfFilter {
+	return &iFilter{
+		CollectionNm: collectionNm,
+		Filter:       filter,
+	}
+}
+
+func (x iFilter) GetCollectionNm() string {
+	return x.CollectionNm
+}
+
+func (x iFilter) GetFilter() any {
+	return x.Filter
+}
