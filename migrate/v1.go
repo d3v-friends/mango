@@ -3,7 +3,7 @@ package migrate
 import (
 	"context"
 	"fmt"
-	"github.com/d3v-friends/mango/models"
+	"github.com/d3v-friends/mango/mtype"
 	"github.com/d3v-friends/mango/mvars"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -37,14 +37,14 @@ func (x *docMango) GetCollectionNm() string {
 	return colMango
 }
 
-func (x *docMango) GetMigrateList() models.FnMigrateList {
-	return models.FnMigrateList{}
+func (x *docMango) GetMigrateList() mtype.FnMigrateList {
+	return mtype.FnMigrateList{}
 }
 
 func (x *docMango) RunMigrate(
 	ctx context.Context,
 	db *mongo.Database,
-	model models.IfMigrateModel,
+	model mtype.IfMigrateModel,
 ) (err error) {
 
 	lsMigrateFn := model.GetMigrateList()
@@ -91,7 +91,7 @@ func (x *docMango) RunMigrate(
 func V1(
 	ctx context.Context,
 	db *mongo.Database,
-	models ...models.IfMigrateModel,
+	models ...mtype.IfMigrateModel,
 ) (err error) {
 	var doc *docMango
 	if doc, err = lockDocMangoV1(ctx, db); err != nil {

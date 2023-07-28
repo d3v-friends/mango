@@ -3,7 +3,7 @@ package mango
 import (
 	"context"
 	"fmt"
-	"github.com/d3v-friends/mango/models"
+	"github.com/d3v-friends/mango/mtype"
 	"github.com/d3v-friends/mango/mvars"
 	"github.com/d3v-friends/pure-go/fnEnv"
 	"github.com/d3v-friends/pure-go/fnReflect"
@@ -118,8 +118,8 @@ func (x *testModel) GetCollectionNm() string {
 	return "testModel"
 }
 
-func (x *testModel) GetMigrateList() models.FnMigrateList {
-	return models.FnMigrateList{
+func (x *testModel) GetMigrateList() mtype.FnMigrateList {
+	return mtype.FnMigrateList{
 		func(ctx context.Context, collection *mongo.Collection) (migrationNm string, err error) {
 			migrationNm = "indexing"
 			_, err = collection.Indexes().CreateOne(

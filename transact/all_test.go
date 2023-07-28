@@ -1,7 +1,6 @@
 package transact
 
 import (
-	"github.com/d3v-friends/mango/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
 )
@@ -20,8 +19,8 @@ func (x *testModel) GetCollectionNm() string {
 	return "transactModel"
 }
 
-func (x *testModel) GetMigrateList() models.FnMigrateList {
-	return make(models.FnMigrateList, 0)
+func (x *testModel) GetMigrateList() minterface.FnMigrateList {
+	return make(minterface.FnMigrateList, 0)
 }
 
 func (x *testModel) GetID() primitive.ObjectID {

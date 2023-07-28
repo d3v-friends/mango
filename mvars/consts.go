@@ -19,10 +19,14 @@ const (
 	OPull        = "$pull"
 	ONE          = "$ne"
 	OMatch       = "$match"
-	OLookUp      = "$lookUp"
+	OLookUp      = "$lookup"
 	OReplaceRoot = "$replaceRoot"
 	OType        = "$type"
 	ONot         = "$not"
+	OLimit       = "$limit"
+	OSkip        = "$skip"
+	OArrayElemAt = "$arrayElemAt"
+	OAddField    = "$addFields"
 )
 
 const (
