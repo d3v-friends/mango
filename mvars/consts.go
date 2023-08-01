@@ -27,6 +27,7 @@ const (
 	OSkip        = "$skip"
 	OArrayElemAt = "$arrayElemAt"
 	OAddField    = "$addFields"
+	OAll         = "$all"
 )
 
 const (
