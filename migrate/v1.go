@@ -52,7 +52,7 @@ func (x *docMango) RunMigrate(
 	lsDone, has := x.Migrate[model.GetCollectionNm()]
 	idx := 0
 	if has {
-		idx = len(lsDone) - 1
+		idx = len(lsDone)
 	}
 
 	colModel := db.Collection(model.GetCollectionNm())
