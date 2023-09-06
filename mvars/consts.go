@@ -28,6 +28,7 @@ const (
 	OArrayElemAt = "$arrayElemAt"
 	OAddField    = "$addFields"
 	OAll         = "$all"
+	OAddToSet    = "$addToSet"
 )
 
 const (
