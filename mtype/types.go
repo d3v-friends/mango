@@ -7,10 +7,7 @@ import (
 )
 
 type (
-	IfModel interface {
-		IfMigrateModel
-		IfTrxModel
-	}
+	IfModel IfMigrateModel
 
 	IfTrxModel interface {
 		GetID() primitive.ObjectID

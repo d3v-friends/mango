@@ -91,7 +91,7 @@ func (x *docMango) RunMigrate(
 func V1(
 	ctx context.Context,
 	db *mongo.Database,
-	models ...mtype.IfMigrateModel,
+	models ...mtype.IfModel,
 ) (err error) {
 	var doc *docMango
 	if doc, err = lockDocMangoV1(ctx, db); err != nil {
