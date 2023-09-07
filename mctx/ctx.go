@@ -32,3 +32,7 @@ func GetP[T IMongo](ctx context.Context) (res T) {
 	}
 	return
 }
+
+func GetDBP(ctx context.Context) (res *mongo.Database) {
+	return GetP[*mongo.Database](ctx)
+}
