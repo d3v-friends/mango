@@ -35,3 +35,13 @@ const (
 	VArrayType  = "array"
 	VObjectType = "object"
 )
+
+type FLookUp string
+
+const (
+	FLookUpFrom         FLookUp = "from"
+	FLookUpAs           FLookUp = "as"
+	FLookUpLocalField   FLookUp = "localField"
+	FLookUpForeignField FLookUp = "foreignField"
+	FLookUpPipeline     FLookUp = "pipeline"
+)

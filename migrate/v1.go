@@ -47,16 +47,16 @@ func (x *docMango) RunMigrate(
 	model mtype.IfMigrateModel,
 ) (err error) {
 
-	lsMigrateFn := model.GetMigrateList()
+	var lsMigrateFn = model.GetMigrateList()
+	var lsDone, has = x.Migrate[model.GetCollectionNm()]
 
-	lsDone, has := x.Migrate[model.GetCollectionNm()]
-	idx := 0
+	var idx = 0
 	if has {
 		idx = len(lsDone)
 	}
 
-	colModel := db.Collection(model.GetCollectionNm())
-	colMigrate := db.Collection(colMango)
+	var colModel = db.Collection(model.GetCollectionNm())
+	var colMigrate = db.Collection(colMango)
 
 	for i := idx; i < len(lsMigrateFn); i++ {
 		fn := lsMigrateFn[i]
