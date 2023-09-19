@@ -1,0 +1,34 @@
+version: "3.8"
+services:
+  mongodb:
+    image: "docker.dev-friends.com/mango5"
+    container_name: "mongodb"
+    entrypoint:
+      - bash
+      - -c
+      - |
+        chmod 400 /ssl/mongodb.key
+        chown 999:999 /ssl/mongodb.key
+        exec docker-entrypoint.sh $$@
+    command: [
+      "mongod",
+      "--bind_ip_all",
+      "--port", "10000",
+      "--keyFile", "/ssl/mongodb.key",
+      "--wiredTigerCacheSizeGB", "2",
+    ]
+    volumes:
+      - "~/mongo/db/:/data/"
+    environment:
+      TZ: "ETC/UTC"
+      MONGO_INITDB_ROOT_USERNAME: "root"
+      MONGO_INITDB_ROOT_PASSWORD: "sms1234"
+    ports:
+      - "10000:10000"
+    networks:
+      - default
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "5"
+        max-size: "10m"
