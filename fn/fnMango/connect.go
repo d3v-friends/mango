@@ -28,7 +28,7 @@ func (x *IConnect) Options() (opt *options.ClientOptions) {
 		})
 
 	if x.Registry != nil {
-		opt.SetRegistry(opt.Registry)
+		opt = opt.SetRegistry(opt.Registry)
 	}
 
 	return
