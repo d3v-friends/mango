@@ -17,6 +17,13 @@ type (
 	}
 )
 
+func AppendDecimalCodec(registry *bsoncodec.Registry) *bsoncodec.Registry {
+	var _, codec = DecimalCodecRegister()
+	registry.RegisterTypeEncoder(reflect.TypeOf(decimal.Decimal{}), codec)
+	registry.RegisterTypeDecoder(reflect.TypeOf(primitive.Decimal128{}), codec)
+	return registry
+}
+
 var _ IfCodec = &DecimalCodec{}
 
 func DecimalCodecRegister() (reflect.Type, IfCodec) {

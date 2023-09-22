@@ -19,17 +19,15 @@ type IConnect struct {
 }
 
 func (x *IConnect) Options() (opt *options.ClientOptions) {
-	opt = options.Client().SetReadConcern(readconcern.Majority()).
-		SetWriteConcern(writeconcern.Majority()).
+	opt = options.Client().
 		ApplyURI(fmt.Sprintf("mongodb://%s", x.Host)).
+		SetReadConcern(readconcern.Majority()).
+		SetWriteConcern(writeconcern.Majority()).
+		SetRegistry(opt.Registry).
 		SetAuth(options.Credential{
 			Username: x.Username,
 			Password: x.Password,
 		})
-
-	if x.Registry != nil {
-		opt = opt.SetRegistry(opt.Registry)
-	}
 
 	return
 }
