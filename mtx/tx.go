@@ -3,6 +3,7 @@ package mtx
 import (
 	"context"
 	"fmt"
+	"github.com/d3v-friends/go-pure/fnParams"
 	"github.com/d3v-friends/mango/mctx"
 	"github.com/d3v-friends/mango/mtype"
 	"go.mongodb.org/mongo-driver/bson"
@@ -11,30 +12,21 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type Transaction struct {
-	ctx context.Context
-}
+type FnTransact func(txDB *TxDB) (err error)
 
-type FnTransaction func(txCtx context.Context, txDB *TxDB) (err error)
-
-func NewTransaction(ctx context.Context) (res *Transaction, err error) {
-	res = &Transaction{
-		ctx: ctx,
-	}
-	return
-}
-
-func (x *Transaction) Transaction(fn func(txCtx context.Context, txDB *TxDB) (err error)) (err error) {
+func Transact(ctx context.Context, fn FnTransact) (err error) {
 	var txDB = &TxDB{
+		ctx:    ctx,
+		db:     mctx.GetDBP(ctx),
 		insert: make([]*insertModel, 0),
 		delete: make([]*deleteModel, 0),
 		update: make([]*updateModel, 0),
 	}
 
-	if err = fn(x.ctx, txDB); err != nil {
-		err = txDB.Commit(x.ctx)
+	if err = fn(txDB); err == nil {
+		err = txDB.commit()
 	} else {
-		err = txDB.Rollback(x.ctx)
+		err = txDB.rollback()
 	}
 
 	return
@@ -43,6 +35,8 @@ func (x *Transaction) Transaction(fn func(txCtx context.Context, txDB *TxDB) (er
 /* ------------------------------------------------------------------------------------------------------------ */
 
 type TxDB struct {
+	ctx    context.Context
+	db     *mongo.Database
 	insert []*insertModel
 	delete []*deleteModel
 	update []*updateModel
@@ -59,25 +53,20 @@ type deleteModel struct {
 }
 
 type updateModel struct {
-	colNm  string
-	before bson.Raw
+	colNm string
+	raw   bson.Raw
 }
 
-type idModel struct {
-	Id primitive.ObjectID `bson:"_id"`
-}
-
-func (x *TxDB) Commit(ctx context.Context) (err error) {
+func (x *TxDB) commit() (err error) {
 	return
 }
 
-func (x *TxDB) Rollback(ctx context.Context) (err error) {
-	var db = mctx.GetDBP(ctx)
+func (x *TxDB) rollback() (err error) {
 
 	// insert
 	for _, model := range x.insert {
-		var col = db.Collection(model.colNm)
-		if _, err = col.DeleteOne(ctx, bson.M{
+		var col = x.db.Collection(model.colNm)
+		if _, err = col.DeleteOne(x.ctx, bson.M{
 			"_id": model.id,
 		}); err != nil {
 			return
@@ -86,26 +75,28 @@ func (x *TxDB) Rollback(ctx context.Context) (err error) {
 
 	// update
 	for _, model := range x.update {
-		var id = model.before.Lookup("_id").ObjectID()
+		var id = model.raw.Lookup("_id").ObjectID()
 		if id == primitive.NilObjectID {
-			err = fmt.Errorf("fail update rollback cuz not found _id: raw=%s", model.before.String())
+			err = fmt.Errorf("fail update rollback cuz not found _id: raw=%s", model.raw.String())
 			return
 		}
 
-		var col = db.Collection(model.colNm)
+		var col = x.db.Collection(model.colNm)
 		var filter = bson.M{
 			"_id": id,
 		}
 
-		if _, err = col.UpdateOne(ctx, filter, model.before); err != nil {
+		if _, err = col.UpdateOne(x.ctx, filter, bson.M{
+			"$set": model.raw,
+		}); err != nil {
 			return
 		}
 	}
 
 	// delete
 	for _, model := range x.delete {
-		var col = db.Collection(model.colNm)
-		if _, err = col.InsertOne(ctx, model.raw); err != nil {
+		var col = x.db.Collection(model.colNm)
+		if _, err = col.InsertOne(x.ctx, model.raw); err != nil {
 			return
 		}
 	}
@@ -114,11 +105,10 @@ func (x *TxDB) Rollback(ctx context.Context) (err error) {
 }
 
 func (x *TxDB) InsertOne(
-	ctx context.Context,
 	model mtype.IfModel,
 ) (err error) {
-	var col = mctx.GetDBP(ctx).Collection(model.GetCollectionNm())
-	if _, err = col.InsertOne(ctx, model); err != nil {
+	var col = mctx.GetDBP(x.ctx).Collection(model.GetCollectionNm())
+	if _, err = col.InsertOne(x.ctx, model); err != nil {
 		return
 	}
 
@@ -131,7 +121,6 @@ func (x *TxDB) InsertOne(
 }
 
 func (x *TxDB) InsertMany(
-	ctx context.Context,
 	models []mtype.IfModel,
 ) (err error) {
 	if len(models) == 0 {
@@ -139,9 +128,8 @@ func (x *TxDB) InsertMany(
 		return
 	}
 
-	var db = mctx.GetDBP(ctx)
 	var colNm = models[0].GetCollectionNm()
-	var col = db.Collection(colNm)
+	var col = x.db.Collection(colNm)
 
 	var ls = make([]interface{}, len(models))
 	for i, model := range models {
@@ -155,7 +143,7 @@ func (x *TxDB) InsertMany(
 		})
 	}
 
-	if _, err = col.InsertMany(ctx, ls); err != nil {
+	if _, err = col.InsertMany(x.ctx, ls); err != nil {
 		return
 	}
 
@@ -163,16 +151,15 @@ func (x *TxDB) InsertMany(
 }
 
 func (x *TxDB) UpdateOne(
-	ctx context.Context,
 	colNm string,
 	filter any,
 	update any,
-	opt *options.UpdateOptions,
+	opts ...*options.UpdateOptions,
 ) (err error) {
-	var col = mctx.GetDBP(ctx).Collection(colNm)
+	var col = x.db.Collection(colNm)
 
 	var cur *mongo.SingleResult
-	if cur = col.FindOne(ctx, filter); cur.Err() != nil {
+	if cur = col.FindOne(x.ctx, filter); cur.Err() != nil {
 		err = cur.Err()
 		return
 	}
@@ -183,11 +170,12 @@ func (x *TxDB) UpdateOne(
 	}
 
 	x.update = append(x.update, &updateModel{
-		colNm:  colNm,
-		before: raw,
+		colNm: colNm,
+		raw:   raw,
 	})
 
-	if _, err = col.UpdateOne(ctx, filter, update, opt); err != nil {
+	var opt = fnParams.Get(opts)
+	if _, err = col.UpdateOne(x.ctx, filter, update, opt); err != nil {
 		return
 	}
 
@@ -196,28 +184,21 @@ func (x *TxDB) UpdateOne(
 
 // UpdateMany 1개씩 모두 불러와서 변경하므로 느려질수 있음을 인지해야 한다
 func (x *TxDB) UpdateMany(
-	ctx context.Context,
 	colNm string,
 	filter any,
 	update any,
-	opt *options.UpdateOptions,
+	opts ...*options.UpdateOptions,
 ) (err error) {
-
-	var col = mctx.GetDBP(ctx).Collection(colNm)
+	var col = x.db.Collection(colNm)
 
 	var cur *mongo.Cursor
-	if cur, err = col.Find(ctx, filter); err != nil {
+	if cur, err = col.Find(x.ctx, filter); err != nil {
 		return
 	}
 
-	var ids = make([]*idModel, 0)
-	if err = cur.All(ctx, &ids); err != nil {
-		return
-	}
-
-	// 1개씩 업데이트
-	for _, id := range ids {
-		if err = x.UpdateOne(ctx, colNm, bson.M{"_id": id}, update, opt); err != nil {
+	for cur.Next(x.ctx) {
+		var id = cur.Current.Lookup("_id").ObjectID()
+		if err = x.UpdateOne(colNm, bson.M{"_id": id}, update, fnParams.Get(opts)); err != nil {
 			return
 		}
 	}
@@ -226,15 +207,14 @@ func (x *TxDB) UpdateMany(
 }
 
 func (x *TxDB) DeleteOne(
-	ctx context.Context,
 	colNm string,
 	filter any,
-	opt *options.DeleteOptions,
+	opts ...*options.DeleteOptions,
 ) (err error) {
-	var col = mctx.GetDBP(ctx).Collection(colNm)
+	var col = x.db.Collection(colNm)
 
 	var res *mongo.SingleResult
-	if res = col.FindOne(ctx, filter); res.Err() != nil {
+	if res = col.FindOne(x.ctx, filter); res.Err() != nil {
 		err = res.Err()
 		return
 	}
@@ -249,7 +229,7 @@ func (x *TxDB) DeleteOne(
 		raw:   raw,
 	})
 
-	if _, err = col.DeleteOne(ctx, filter, opt); err != nil {
+	if _, err = col.DeleteOne(x.ctx, filter, fnParams.Get(opts)); err != nil {
 		return
 	}
 
@@ -258,20 +238,19 @@ func (x *TxDB) DeleteOne(
 
 // DeleteMany 1개씩 삭제하므로 속도가 느릴수 있다.
 func (x *TxDB) DeleteMany(
-	ctx context.Context,
 	colNm string,
 	filter any,
 	opt *options.DeleteOptions,
 ) (err error) {
-	var col = mctx.GetDBP(ctx).Collection(colNm)
+	var col = x.db.Collection(colNm)
 
 	var cur *mongo.Cursor
-	if cur, err = col.Find(ctx, filter); err != nil {
+	if cur, err = col.Find(x.ctx, filter); err != nil {
 		return
 	}
 
 	var ids = make([]primitive.ObjectID, 0)
-	for cur.Next(ctx) {
+	for cur.Next(x.ctx) {
 		x.delete = append(x.delete, &deleteModel{
 			colNm: colNm,
 			raw:   cur.Current,
@@ -283,10 +262,33 @@ func (x *TxDB) DeleteMany(
 
 	// 1개씩 삭제
 	for _, id := range ids {
-		if err = x.DeleteOne(ctx, colNm, bson.M{"_id": id}, opt); err != nil {
+		if err = x.DeleteOne(colNm, bson.M{"_id": id}, opt); err != nil {
 			return
 		}
 	}
 
 	return
+}
+
+func (x *TxDB) FindOne(
+	colNm string,
+	filter any,
+	opts ...*options.FindOneOptions,
+) (res *mongo.SingleResult) {
+	return x.db.Collection(colNm).FindOne(x.ctx, filter, fnParams.Get(opts))
+}
+
+func (x *TxDB) Find(
+	colNm string,
+	filter any,
+	opts ...*options.FindOptions,
+) (res *mongo.Cursor, err error) {
+	return x.db.Collection(colNm).Find(x.ctx, filter, fnParams.Get(opts))
+}
+
+func (x *TxDB) Count(
+	colNm string,
+	filter any,
+) (count int64, err error) {
+	return x.db.Collection(colNm).CountDocuments(x.ctx, filter)
 }

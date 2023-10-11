@@ -17,16 +17,9 @@ type (
 	}
 )
 
-func NewRegistryWithDecimal() (res *bsoncodec.Registry) {
-	res = bsoncodec.NewRegistry()
-	res = AppendDecimalCodec(res)
-	return
-}
-
 func AppendDecimalCodec(registry *bsoncodec.Registry) *bsoncodec.Registry {
-	var _, codec = DecimalCodecRegister()
-	registry.RegisterTypeEncoder(reflect.TypeOf(decimal.Decimal{}), codec)
-	registry.RegisterTypeDecoder(reflect.TypeOf(primitive.Decimal128{}), codec)
+	registry.RegisterTypeEncoder(DecimalCodecRegister())
+	registry.RegisterTypeDecoder(DecimalCodecRegister())
 	return registry
 }
 
@@ -36,30 +29,33 @@ func DecimalCodecRegister() (reflect.Type, IfCodec) {
 	return reflect.TypeOf(decimal.Decimal{}), &DecimalCodec{}
 }
 
-func (dc *DecimalCodec) EncodeValue(_ bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
-	dec, ok := val.Interface().(decimal.Decimal)
+func (dc *DecimalCodec) EncodeValue(_ bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) (err error) {
+	var dec, ok = val.Interface().(decimal.Decimal)
 	if !ok {
-		return errors.New("invalidDecimal")
+		err = errors.New("invalid decimal")
+		return
 	}
 
-	primDec, err := primitive.ParseDecimal128(dec.String())
-	if err != nil {
-		return errors.New("invalidDecimal")
+	var primitiveDecimal primitive.Decimal128
+	if primitiveDecimal, err = primitive.ParseDecimal128(dec.String()); err != nil {
+		return
 	}
-	return vw.WriteDecimal128(primDec)
+
+	return vw.WriteDecimal128(primitiveDecimal)
 }
 
-func (dc *DecimalCodec) DecodeValue(_ bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
-	primDec, err := vr.ReadDecimal128()
-	if err != nil {
-		return errors.New("invalidDecimal")
+func (dc *DecimalCodec) DecodeValue(_ bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) (err error) {
+	var primitiveDecimal primitive.Decimal128
+	if primitiveDecimal, err = vr.ReadDecimal128(); err != nil {
+		return errors.New("invalid decimal")
 	}
 
-	dec, err := decimal.NewFromString(primDec.String())
-	if err != nil {
-		return errors.New("invalidDecimal")
+	var dec decimal.Decimal
+	if dec, err = decimal.NewFromString(primitiveDecimal.String()); err != nil {
+		return errors.New("invalid decimal")
 	}
 
 	val.Set(reflect.ValueOf(dec))
-	return nil
+
+	return
 }

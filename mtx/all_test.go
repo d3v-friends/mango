@@ -11,8 +11,10 @@ import (
 	"time"
 )
 
+// testModel
 type testModel struct {
 	Id        primitive.ObjectID `bson:"_id"`
+	GroupId   primitive.ObjectID `bson:"groupId"`
 	Name      string             `bson:"name"`
 	CreatedAt time.Time          `bson:"createdAt"`
 }
@@ -29,6 +31,8 @@ func (x *testModel) GetMigrateList() mtype.FnMigrateList {
 	return mtype.FnMigrateList{}
 }
 
+/* ------------------------------------------------------------------------------------------------------------ */
+// testTool
 type testTool struct {
 	db *mongo.Database
 }
