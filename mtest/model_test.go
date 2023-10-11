@@ -2,8 +2,8 @@ package mtest
 
 import (
 	"context"
+	"github.com/d3v-friends/go-pure/fnReflect"
 	"github.com/d3v-friends/mango/mtype"
-	"github.com/d3v-friends/pure-go/fnReflect"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -28,6 +28,10 @@ type Account struct {
 	AccountDataId primitive.ObjectID `bson:"accountDataId"`
 	UserType      UserType           `bson:"userType"`
 	UpdatedAt     time.Time          `bson:"createdAt"`
+}
+
+func (x Account) GetID() primitive.ObjectID {
+	return x.Id
 }
 
 const colAccount = "accounts"
@@ -94,6 +98,10 @@ func (x AccountData) GetCollectionNm() string {
 
 func (x AccountData) GetMigrateList() mtype.FnMigrateList {
 	return mgAccountData
+}
+
+func (x AccountData) GetID() primitive.ObjectID {
+	return x.Id
 }
 
 type AccountWithData struct {

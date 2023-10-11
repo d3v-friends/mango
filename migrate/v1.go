@@ -33,6 +33,10 @@ const (
 	colMango = "mango"
 )
 
+func (x *docMango) GetID() primitive.ObjectID {
+	return x.Id
+}
+
 func (x *docMango) GetCollectionNm() string {
 	return colMango
 }

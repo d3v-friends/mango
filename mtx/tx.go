@@ -1,8 +1,10 @@
-package mtrx
+package mtx
 
 import (
 	"context"
+	"fmt"
 	"github.com/d3v-friends/mango/mctx"
+	"github.com/d3v-friends/mango/mtype"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -10,21 +12,32 @@ import (
 )
 
 type Transaction struct {
-	db *mongo.Database
+	ctx context.Context
 }
 
-type FnTransaction func(mctx context.Context, txDB *TxDB) (err error)
+type FnTransaction func(txCtx context.Context, txDB *TxDB) (err error)
 
-func (x *Transaction) Transaction(ctx context.Context, fn func(mctx context.Context, txDB *TxDB) (err error)) (err error) {
+func NewTransaction(ctx context.Context) (res *Transaction, err error) {
+	res = &Transaction{
+		ctx: ctx,
+	}
+	return
+}
+
+func (x *Transaction) Transaction(fn func(txCtx context.Context, txDB *TxDB) (err error)) (err error) {
 	var txDB = &TxDB{
-		deleteIds: make([]primitive.ObjectID, 0),
-	}
-	if err = fn(ctx, txDB); err != nil {
-		err = txDB.Commit(ctx)
-	} else {
-		err = txDB.Rollback(ctx)
+		insert: make([]*insertModel, 0),
+		delete: make([]*deleteModel, 0),
+		update: make([]*updateModel, 0),
 	}
 
+	if err = fn(x.ctx, txDB); err != nil {
+		err = txDB.Commit(x.ctx)
+	} else {
+		err = txDB.Rollback(x.ctx)
+	}
+
+	return
 }
 
 /* ------------------------------------------------------------------------------------------------------------ */
@@ -47,7 +60,6 @@ type deleteModel struct {
 
 type updateModel struct {
 	colNm  string
-	filter any
 	before bson.Raw
 }
 
@@ -55,31 +67,63 @@ type idModel struct {
 	Id primitive.ObjectID `bson:"_id"`
 }
 
-type IfModel interface {
-	GetID() primitive.ObjectID
-}
-
 func (x *TxDB) Commit(ctx context.Context) (err error) {
 	return
 }
 
 func (x *TxDB) Rollback(ctx context.Context) (err error) {
-	// delete inserted
-	panic("not impl")
+	var db = mctx.GetDBP(ctx)
+
+	// insert
+	for _, model := range x.insert {
+		var col = db.Collection(model.colNm)
+		if _, err = col.DeleteOne(ctx, bson.M{
+			"_id": model.id,
+		}); err != nil {
+			return
+		}
+	}
+
+	// update
+	for _, model := range x.update {
+		var id = model.before.Lookup("_id").ObjectID()
+		if id == primitive.NilObjectID {
+			err = fmt.Errorf("fail update rollback cuz not found _id: raw=%s", model.before.String())
+			return
+		}
+
+		var col = db.Collection(model.colNm)
+		var filter = bson.M{
+			"_id": id,
+		}
+
+		if _, err = col.UpdateOne(ctx, filter, model.before); err != nil {
+			return
+		}
+	}
+
+	// delete
+	for _, model := range x.delete {
+		var col = db.Collection(model.colNm)
+		if _, err = col.InsertOne(ctx, model.raw); err != nil {
+			return
+		}
+	}
+
+	return
 }
 
 func (x *TxDB) InsertOne(
 	ctx context.Context,
-	colNm string,
-	model IfModel,
+	model mtype.IfModel,
 ) (err error) {
-	var col = mctx.GetDBP(ctx).Collection(colNm)
+	var col = mctx.GetDBP(ctx).Collection(model.GetCollectionNm())
 	if _, err = col.InsertOne(ctx, model); err != nil {
 		return
 	}
 
 	x.insert = append(x.insert, &insertModel{
-		colNm: colNm,
+		colNm: model.GetCollectionNm(),
 		id:    model.GetID(),
 	})
 
@@ -88,14 +132,23 @@ func (x *TxDB) InsertOne(
 
 func (x *TxDB) InsertMany(
 	ctx context.Context,
-	colNm string,
-	models []IfModel,
+	models []mtype.IfModel,
 ) (err error) {
-	var col = mctx.GetDBP(ctx).Collection(colNm)
+	if len(models) == 0 {
+		err = fmt.Errorf("fail insert many, empty models")
+		return
+	}
+
+	var db = mctx.GetDBP(ctx)
+	var colNm = models[0].GetCollectionNm()
+	var col = db.Collection(colNm)
 
 	var ls = make([]interface{}, len(models))
 	for i, model := range models {
+		// insert 위한 형변환
 		ls[i] = model
+
+		// rollback 을 위한 데이터 추가
 		x.insert = append(x.insert, &insertModel{
 			colNm: colNm,
 			id:    model.GetID(),
@@ -131,7 +184,6 @@ func (x *TxDB) UpdateOne(
 
 	x.update = append(x.update, &updateModel{
 		colNm:  colNm,
-		filter: filter,
 		before: raw,
 	})
 
@@ -225,13 +277,8 @@ func (x *TxDB) DeleteMany(
 			raw:   cur.Current,
 		})
 
-		// todo  두번 읽을수 있는지 확인해보기
-		var i = &idModel{}
-		if err = cur.Decode(i); err != nil {
-			return
-		}
-
-		ids = append(ids, i.Id)
+		// todo 이곳 체크해보기
+		ids = append(ids, cur.Current.Lookup("_id").ObjectID())
 	}
 
 	// 1개씩 삭제

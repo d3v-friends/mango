@@ -2,7 +2,7 @@ package fnBson
 
 import (
 	"fmt"
-	"github.com/d3v-friends/pure-go/fnParams"
+	"github.com/d3v-friends/go-pure/fnParams"
 	"go.mongodb.org/mongo-driver/bson"
 )
 

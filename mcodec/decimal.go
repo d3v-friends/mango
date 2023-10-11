@@ -17,6 +17,12 @@ type (
 	}
 )
 
+func NewRegistryWithDecimal() (res *bsoncodec.Registry) {
+	res = bsoncodec.NewRegistry()
+	res = AppendDecimalCodec(res)
+	return
+}
+
 func AppendDecimalCodec(registry *bsoncodec.Registry) *bsoncodec.Registry {
 	var _, codec = DecimalCodecRegister()
 	registry.RegisterTypeEncoder(reflect.TypeOf(decimal.Decimal{}), codec)

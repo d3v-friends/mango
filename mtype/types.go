@@ -16,6 +16,7 @@ type (
 
 	IfMigrateModel interface {
 		IfColNm
+		GetID() primitive.ObjectID
 		GetMigrateList() FnMigrateList
 	}
 

@@ -23,11 +23,14 @@ func (x *IConnect) Options() (opt *options.ClientOptions) {
 		ApplyURI(fmt.Sprintf("mongodb://%s", x.Host)).
 		SetReadConcern(readconcern.Majority()).
 		SetWriteConcern(writeconcern.Majority()).
-		SetRegistry(opt.Registry).
 		SetAuth(options.Credential{
 			Username: x.Username,
 			Password: x.Password,
 		})
+
+	if x.Registry != nil {
+		opt.SetRegistry(x.Registry)
+	}
 
 	return
 }
