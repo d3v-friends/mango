@@ -3,6 +3,7 @@ package fnMango
 import (
 	"context"
 	"fmt"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -11,11 +12,13 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 )
 
+type FnSetRegistry func(registry *bsoncodec.Registry) *bsoncodec.Registry
+
 type IConnect struct {
-	Host     string
-	Username string
-	Password string
-	Registry *bsoncodec.Registry
+	Host        string
+	Username    string
+	Password    string
+	SetRegistry FnSetRegistry
 }
 
 func (x *IConnect) Options() (opt *options.ClientOptions) {
@@ -28,10 +31,11 @@ func (x *IConnect) Options() (opt *options.ClientOptions) {
 			Password: x.Password,
 		})
 
-	if x.Registry != nil {
-		opt.SetRegistry(x.Registry)
-	}
+	opt.Registry = bson.DefaultRegistry
 
+	if x.SetRegistry != nil {
+		opt.Registry = x.SetRegistry(opt.Registry)
+	}
 	return
 }
 
@@ -39,6 +43,7 @@ func Connect(ctx context.Context, i *IConnect) (client *mongo.Client, err error)
 	if client, err = mongo.Connect(ctx, i.Options()); err != nil {
 		return
 	}
+
 	if err = client.Ping(ctx, readpref.Primary()); err != nil {
 		return
 	}
