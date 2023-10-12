@@ -135,7 +135,20 @@ func (x *TxDB) rollback() (err error) {
 		}
 	}
 
-	// todo unlock
+	// unlock
+	for _, model := range x.lock {
+		var col = x.db.Collection(model.colNm)
+		if _, err = col.UpdateOne(
+			x.ctx,
+			bson.M{
+				"_id":        model.id,
+				isLockColumn: false,
+			}, updateUnlock,
+		); err != nil {
+			return
+		}
+	}
+
 	return
 }
 
