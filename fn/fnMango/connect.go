@@ -29,6 +29,9 @@ func (x *IConnect) Options() (opt *options.ClientOptions) {
 		SetAuth(options.Credential{
 			Username: x.Username,
 			Password: x.Password,
+		}).
+		SetBSONOptions(&options.BSONOptions{
+			UseLocalTimeZone: false,
 		})
 
 	opt.Registry = bson.DefaultRegistry

@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"reflect"
 )
 
 type FnTransact func(txDB *TxDB) (err error)
@@ -20,6 +21,17 @@ const isLockColumn = "isLock"
 var updateLock = bson.M{
 	"$set": bson.M{
 		isLockColumn: true,
+	},
+}
+
+var lockFilter = bson.A{
+	bson.M{
+		isLockColumn: bson.M{
+			mvars.OExists: false,
+		},
+	},
+	bson.M{
+		isLockColumn: false,
 	},
 }
 
@@ -123,6 +135,7 @@ func (x *TxDB) rollback() (err error) {
 		}
 	}
 
+	// todo unlock
 	return
 }
 
@@ -321,8 +334,17 @@ func (x *TxDB) FindOneAndLock(
 	model any,
 	opts ...*options.FindOneAndUpdateOptions,
 ) (err error) {
-	filter[isLockColumn] = bson.M{
-		mvars.OExists: false,
+	var or, has = filter[mvars.OOr]
+	if has {
+		var array, isOk = or.(bson.A)
+		if !isOk {
+			err = fmt.Errorf("filter $or is not bson.A type: $or=%s", reflect.TypeOf(or).Kind())
+			return
+		}
+
+		array = append(array, lockFilter...)
+	} else {
+		filter[mvars.OOr] = lockFilter
 	}
 
 	var col = mctx.GetDBP(x.ctx).Collection(colNm)
