@@ -6,6 +6,7 @@ import (
 	"github.com/d3v-friends/go-pure/fnParams"
 	"github.com/d3v-friends/mango/mctx"
 	"github.com/d3v-friends/mango/mtype"
+	"github.com/d3v-friends/mango/mvars"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -14,6 +15,20 @@ import (
 
 type FnTransact func(txDB *TxDB) (err error)
 
+const isLockColumn = "isLock"
+
+var updateLock = bson.M{
+	"$set": bson.M{
+		isLockColumn: true,
+	},
+}
+
+var updateUnlock = bson.M{
+	"$unset": bson.M{
+		isLockColumn: "",
+	},
+}
+
 func Transact(ctx context.Context, fn FnTransact) (err error) {
 	var txDB = &TxDB{
 		ctx:    ctx,
@@ -21,6 +36,7 @@ func Transact(ctx context.Context, fn FnTransact) (err error) {
 		insert: make([]*insertModel, 0),
 		delete: make([]*deleteModel, 0),
 		update: make([]*updateModel, 0),
+		lock:   make([]*lockModel, 0),
 	}
 
 	if err = fn(txDB); err == nil {
@@ -40,6 +56,7 @@ type TxDB struct {
 	insert []*insertModel
 	delete []*deleteModel
 	update []*updateModel
+	lock   []*lockModel
 }
 
 type insertModel struct {
@@ -55,6 +72,11 @@ type deleteModel struct {
 type updateModel struct {
 	colNm string
 	raw   bson.Raw
+}
+
+type lockModel struct {
+	colNm string
+	id    primitive.ObjectID
 }
 
 func (x *TxDB) commit() (err error) {
@@ -292,3 +314,44 @@ func (x *TxDB) Count(
 ) (count int64, err error) {
 	return x.db.Collection(colNm).CountDocuments(x.ctx, filter)
 }
+
+func (x *TxDB) FindOneAndLock(
+	colNm string,
+	filter bson.M,
+	model any,
+	opts ...*options.FindOneAndUpdateOptions,
+) (err error) {
+	filter[isLockColumn] = bson.M{
+		mvars.OExists: false,
+	}
+
+	var col = mctx.GetDBP(x.ctx).Collection(colNm)
+	var res *mongo.SingleResult
+	if res = col.FindOneAndUpdate(
+		x.ctx,
+		filter,
+		updateLock,
+		fnParams.Get(opts),
+	); res.Err() != nil {
+		err = res.Err()
+		return
+	}
+
+	var raw bson.Raw
+	if raw, err = res.DecodeBytes(); err != nil {
+		return
+	}
+
+	x.lock = append(x.lock, &lockModel{
+		colNm: colNm,
+		id:    raw.Lookup("_id").ObjectID(),
+	})
+
+	if err = res.Decode(model); err != nil {
+		return
+	}
+
+	return
+}
+
+// FindAndLock 은 MongoDB 자체에 기능이 없으므로 구현하지 않는다.
