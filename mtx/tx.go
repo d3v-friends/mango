@@ -36,8 +36,8 @@ var lockFilter = bson.A{
 }
 
 var updateUnlock = bson.M{
-	"$unset": bson.M{
-		isLockColumn: "",
+	"$set": bson.M{
+		isLockColumn: false,
 	},
 }
 
