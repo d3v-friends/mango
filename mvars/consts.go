@@ -13,7 +13,7 @@ const (
 const (
 	OSet         = "$set"
 	OPush        = "$push"
-	OExists      = "$exist"
+	OExists      = "$exists"
 	OOr          = "$or"
 	OUnset       = "$unset"
 	OPull        = "$pull"
