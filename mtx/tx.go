@@ -35,12 +35,6 @@ var lockFilter = bson.A{
 	},
 }
 
-var updateUnlock = bson.M{
-	"$set": bson.M{
-		isLockColumn: false,
-	},
-}
-
 func Transact(ctx context.Context, fn FnTransact) (err error) {
 	var txDB = &TxDB{
 		ctx:    ctx,
@@ -91,20 +85,35 @@ type lockModel struct {
 	id    primitive.ObjectID
 }
 
-func (x *TxDB) commit() (err error) {
+func (x *TxDB) unlock() (err error) {
 	for _, model := range x.lock {
 		var col = x.db.Collection(model.colNm)
-		if _, err = col.UpdateOne(
+		var res *mongo.UpdateResult
+		if res, err = col.UpdateOne(
 			x.ctx,
 			bson.M{
 				"_id":        model.id,
-				isLockColumn: false,
-			}, updateUnlock,
+				isLockColumn: true,
+			},
+			bson.M{
+				"$set": bson.M{
+					isLockColumn: false,
+				},
+			},
 		); err != nil {
+			return
+		}
+
+		if res.ModifiedCount != 1 {
+			err = fmt.Errorf("fail unlock document: colNm=%s, id=%s", model.colNm, model.id.Hex())
 			return
 		}
 	}
 	return
+}
+
+func (x *TxDB) commit() (err error) {
+	return x.unlock()
 }
 
 func (x *TxDB) rollback() (err error) {
@@ -148,18 +157,8 @@ func (x *TxDB) rollback() (err error) {
 	}
 
 	// unlock
-	for _, model := range x.lock {
-		var col = x.db.Collection(model.colNm)
-		if _, err = col.UpdateOne(
-			x.ctx,
-			bson.M{
-				"_id":        model.id,
-				isLockColumn: false,
-			},
-			updateUnlock,
-		); err != nil {
-			return
-		}
+	if err = x.unlock(); err != nil {
+		return
 	}
 
 	return
