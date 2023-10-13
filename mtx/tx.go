@@ -3,6 +3,7 @@ package mtx
 import (
 	"context"
 	"fmt"
+	"github.com/d3v-friends/go-pure/fnPanic"
 	"github.com/d3v-friends/go-pure/fnParams"
 	"github.com/d3v-friends/mango/mctx"
 	"github.com/d3v-friends/mango/mtype"
@@ -46,9 +47,9 @@ func Transact(ctx context.Context, fn FnTransact) (err error) {
 	}
 
 	if err = fn(txDB); err == nil {
-		err = txDB.commit()
+		fnPanic.On(txDB.commit())
 	} else {
-		err = txDB.rollback()
+		fnPanic.On(txDB.rollback())
 	}
 
 	return
