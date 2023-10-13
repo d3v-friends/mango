@@ -1,15 +1,8 @@
 version: "3.8"
 services:
   mongodb:
-    image: "docker.dev-friends.com/mango5"
-    container_name: "mongodb"
-    entrypoint:
-      - bash
-      - -c
-      - |
-        chmod 400 /ssl/mongodb.key
-        chown 999:999 /ssl/mongodb.key
-        exec docker-entrypoint.sh $$@
+    image: docker.dev-friends.com/mango5
+    container_name: mongodb
     command: [
       "mongod",
       "--bind_ip_all",
