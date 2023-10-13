@@ -13,6 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"reflect"
+	"time"
 )
 
 type FnTransact func(txDB *TxDB) (err error)
@@ -49,6 +50,32 @@ func Transact(ctx context.Context, fn FnTransact) (err error) {
 	if err = fn(txDB); err == nil {
 		fnPanic.On(txDB.commit())
 	} else {
+		fnPanic.On(txDB.rollback())
+	}
+
+	return
+}
+
+// TransactWithDelay transact 실험용 function
+func TransactWithDelay(
+	ctx context.Context,
+	fn FnTransact,
+	delay time.Duration,
+) (err error) {
+	var txDB = &TxDB{
+		ctx:    ctx,
+		db:     mctx.GetDBP(ctx),
+		insert: make([]*insertModel, 0),
+		delete: make([]*deleteModel, 0),
+		update: make([]*updateModel, 0),
+		lock:   make([]*lockModel, 0),
+	}
+
+	if err = fn(txDB); err == nil {
+		time.Sleep(delay)
+		fnPanic.On(txDB.commit())
+	} else {
+		time.Sleep(delay)
 		fnPanic.On(txDB.rollback())
 	}
 
