@@ -1,0 +1,45 @@
+version: 1.0.0
+registry:
+  decimal:
+    type: "github.com/shopspring/decimal.Decimal"
+    fn: "github.com/d3v-friends/mango/mcodec.RegisterDecimal"
+documents:
+  user:
+    fields:
+      identifier:
+        - key: string
+          value: string
+      property:
+        - key: string
+          value: string
+      verifier:
+        - key: string
+          mode: string
+          salt: string
+          saltedValue: string
+          memo: string
+    times:
+      - createdAt
+      - updatedAt
+    indexes:
+      - keys: [ [ "username", "asc" ] ]
+        unique: true
+      - keys: [ [ "property.key", "asc" ], [ "property.value", "asc" ] ]
+        unique: true
+    relations:
+      wallets:
+        from: wallet
+        as: wallets
+        localField: _id
+        foreignField: userId
+        has: many
+  wallet:
+    fields:
+      userId: id
+      point: decimal
+    times:
+      - createdAt
+      - updatedAt
+    indexes:
+      - keys: [ [ "userId", "asc" ] ]
+      - keys: [ [ "point", "desc" ] ]

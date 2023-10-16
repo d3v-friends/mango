@@ -13,6 +13,7 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/gertd/go-pluralize v0.2.1 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/klauspost/compress v1.17.0 // indirect
