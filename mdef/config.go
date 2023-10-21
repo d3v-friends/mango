@@ -30,6 +30,41 @@ type Document struct {
 
 /* ------------------------------------------------------------------------------------------------------------ */
 
+type DocField map[DocFieldNm]DocFieldDef
+
+type DocFieldDef struct {
+	Type           DocFieldType                     `json:"type" yaml:"type"`
+	Object         map[DocFieldNm]DocFieldValueType `json:"object" yaml:"object"`
+	FieldValueType *DocFieldValueType               `json:"fieldValueType" yaml:"fieldValueType"`
+}
+
+/* ------------------------------------------------------------------------------------------------------------ */
+
+type DocFieldType string
+
+func (x DocFieldType) IsValid() bool {
+	for _, fieldType := range DocFieldTypeAll {
+		if x == fieldType {
+			return true
+		}
+	}
+	return false
+}
+
+const (
+	DocFieldTypeObject DocFieldType = "object"
+	DocFieldTypeArray  DocFieldType = "array"
+	DocFieldTypeData   DocFieldType = "data"
+)
+
+var DocFieldTypeAll = []DocFieldType{
+	DocFieldTypeObject,
+	DocFieldTypeArray,
+	DocFieldTypeData,
+}
+
+/* ------------------------------------------------------------------------------------------------------------ */
+
 type DocIndex struct {
 	Key    DocIndexKey `json:"key" yaml:"key"`
 	Unique bool        `json:"unique" yaml:"unique"`
@@ -61,28 +96,22 @@ func (x DocFieldNm) FieldNm() string {
 
 /* ------------------------------------------------------------------------------------------------------------ */
 
-type DocField any
-
-// todo 이곳에 any 타입 reflect 이용하여 타입 정리하여 리턴하기
-
-/* ------------------------------------------------------------------------------------------------------------ */
-
-type DocFieldType string
+type DocFieldValueType string
 
 const (
-	DocFieldTypeMap    DocFieldType = "MAP"
-	DocFieldTypeArray  DocFieldType = "ARRAY"
-	DocFieldTypeObject DocFieldType = "OBJECT"
+	DocFieldValueTypeMap    DocFieldValueType = "MAP"
+	DocFieldValueTypeArray  DocFieldValueType = "ARRAY"
+	DocFieldValueTypeObject DocFieldValueType = "OBJECT"
 )
 
-var DocFieldTypeAll = []DocFieldType{
-	DocFieldTypeMap,
-	DocFieldTypeArray,
-	DocFieldTypeObject,
+var DocFieldValueTypeAll = []DocFieldValueType{
+	DocFieldValueTypeMap,
+	DocFieldValueTypeArray,
+	DocFieldValueTypeObject,
 }
 
-func (x DocFieldType) IsValid() bool {
-	for _, fieldType := range DocFieldTypeAll {
+func (x DocFieldValueType) IsValid() bool {
+	for _, fieldType := range DocFieldValueTypeAll {
 		if fieldType == x {
 			return true
 		}
@@ -189,7 +218,7 @@ var mangoTypeMap = MangoTypeMap{
 		Type: "go.mongodb.org/mongo-driver/bson/primitive.ObjectID",
 	},
 	"decimal": &Registry{
-		Type: "go.mongodb.org/mongo-driver/bson/primitive.ObjectID",
+		Type: "go.mongodb.org/mongo-driver/bson/primitive.Decimal128",
 	},
 	"string": &Registry{
 		Type: "string",
@@ -216,9 +245,9 @@ func (x TimeType) IsValid() bool {
 }
 
 const (
-	TimeTypeCreatedAt TimeType = "CREATED_AT"
-	TimeTypeUpdatedAt TimeType = "UPDATED_AT"
-	TimeTypeDeletedAt TimeType = "DELETED_AT"
+	TimeTypeCreatedAt TimeType = "created_at"
+	TimeTypeUpdatedAt TimeType = "updated_at"
+	TimeTypeDeletedAt TimeType = "deleted_at"
 )
 
 var TimeTypeAll = []TimeType{

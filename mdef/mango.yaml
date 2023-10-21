@@ -12,7 +12,7 @@ documents:
       property:
         - key: string
           value: string
-      verifier:
+      verifier: # map[FieldNm]MType, array[1] = Object , array[1 < i] = Array field
         - key: string
           mode: string
           salt: string
