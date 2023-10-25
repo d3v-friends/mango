@@ -1,131 +1,89 @@
-package mtx
+package m_tx
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/d3v-friends/go-pure/fnPanic"
 	"github.com/d3v-friends/go-pure/fnParams"
-	"github.com/d3v-friends/mango/mctx"
-	"github.com/d3v-friends/mango/mtype"
-	"github.com/d3v-friends/mango/mvars"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"reflect"
-	"time"
 )
 
-type FnTransact func(txDB *TxDB) (err error)
-
-const isLockColumn = "isLock"
-
-var updateLock = bson.M{
-	"$set": bson.M{
-		isLockColumn: true,
-	},
-}
-
-var lockFilter = bson.A{
-	bson.M{
-		isLockColumn: bson.M{
-			mvars.OExists: false,
-		},
-	},
-	bson.M{
-		isLockColumn: false,
-	},
-}
-
-func Transact(ctx context.Context, fn FnTransact) (err error) {
-	var txDB = &TxDB{
-		ctx:    ctx,
-		db:     mctx.GetDBP(ctx),
-		insert: make([]*insertModel, 0),
-		delete: make([]*deleteModel, 0),
-		update: make([]*updateModel, 0),
-		lock:   make([]*lockModel, 0),
+type (
+	TxDB struct {
+		ctx    context.Context
+		txId   primitive.ObjectID
+		db     *mongo.Database
+		insert []*insertModel
+		delete []*deleteModel
+		update []*updateModel
+		lock   []*lockModel
 	}
 
-	if err = fn(txDB); err == nil {
-		fnPanic.On(txDB.commit())
-	} else {
-		fnPanic.On(txDB.rollback())
+	IfTxModel interface {
+		GetID() primitive.ObjectID
+		GetColNm() string
 	}
 
-	return
-}
+	insertModel struct {
+		colNm string
+		id    primitive.ObjectID
+	}
 
-// TransactWithDelay transact 실험용 function
-func TransactWithDelay(
+	deleteModel struct {
+		colNm string
+		raw   bson.Raw
+	}
+
+	updateModel struct {
+		colNm string
+		raw   bson.Raw
+	}
+
+	lockModel struct {
+		colNm string
+		id    primitive.ObjectID
+	}
+)
+
+const FieldInTxNm = "inTx"
+
+func NewTxDB(
 	ctx context.Context,
-	fn FnTransact,
-	delay time.Duration,
-) (err error) {
-	var txDB = &TxDB{
+	db *mongo.Database,
+) (txDB *TxDB) {
+
+	txDB = &TxDB{
 		ctx:    ctx,
-		db:     mctx.GetDBP(ctx),
+		txId:   primitive.NewObjectID(),
+		db:     db,
 		insert: make([]*insertModel, 0),
 		delete: make([]*deleteModel, 0),
 		update: make([]*updateModel, 0),
 		lock:   make([]*lockModel, 0),
 	}
-
-	if err = fn(txDB); err == nil {
-		time.Sleep(delay)
-		fnPanic.On(txDB.commit())
-	} else {
-		time.Sleep(delay)
-		fnPanic.On(txDB.rollback())
-	}
-
 	return
-}
-
-/* ------------------------------------------------------------------------------------------------------------ */
-
-type TxDB struct {
-	ctx    context.Context
-	db     *mongo.Database
-	insert []*insertModel
-	delete []*deleteModel
-	update []*updateModel
-	lock   []*lockModel
-}
-
-type insertModel struct {
-	colNm string
-	id    primitive.ObjectID
-}
-
-type deleteModel struct {
-	colNm string
-	raw   bson.Raw
-}
-
-type updateModel struct {
-	colNm string
-	raw   bson.Raw
-}
-
-type lockModel struct {
-	colNm string
-	id    primitive.ObjectID
 }
 
 func (x *TxDB) unlock() (err error) {
 	for _, model := range x.lock {
 		var col = x.db.Collection(model.colNm)
 		var res *mongo.UpdateResult
+		var filter = bson.M{
+			"_id":       model.id,
+			FieldInTxNm: x.txId,
+		}
+
 		if res, err = col.UpdateOne(
 			x.ctx,
+			filter,
 			bson.M{
-				"_id":        model.id,
-				isLockColumn: true,
-			},
-			bson.M{
-				"$set": bson.M{
-					isLockColumn: false,
+				"$unset": bson.M{
+					FieldInTxNm: "",
 				},
 			},
 		); err != nil {
@@ -133,7 +91,12 @@ func (x *TxDB) unlock() (err error) {
 		}
 
 		if res.ModifiedCount != 1 {
-			err = fmt.Errorf("fail unlock document: colNm=%s, id=%s", model.colNm, model.id.Hex())
+			err = fmt.Errorf(
+				"fail unlock document: colNm=%s, id=%s, filter=%s",
+				model.colNm,
+				model.id.Hex(),
+				fnPanic.Get(json.Marshal(filter)),
+			)
 			return
 		}
 	}
@@ -141,7 +104,11 @@ func (x *TxDB) unlock() (err error) {
 }
 
 func (x *TxDB) commit() (err error) {
-	return x.unlock()
+	if err = x.unlock(); err != nil {
+		return
+	}
+
+	return
 }
 
 func (x *TxDB) rollback() (err error) {
@@ -156,8 +123,10 @@ func (x *TxDB) rollback() (err error) {
 		}
 	}
 
-	// update
-	for _, model := range x.update {
+	// update (First In Last Out) 해야 rollback 이된다.
+	for i := len(x.update) - 1; i >= 0; i-- {
+		var model = x.update[i]
+
 		var id = model.raw.Lookup("_id").ObjectID()
 		if id == primitive.NilObjectID {
 			err = fmt.Errorf("fail update rollback cuz not found _id: raw=%s", model.raw.String())
@@ -192,31 +161,31 @@ func (x *TxDB) rollback() (err error) {
 	return
 }
 
-func (x *TxDB) InsertOne(
-	model mtype.IfModel,
-) (err error) {
-	var col = mctx.GetDBP(x.ctx).Collection(model.GetCollectionNm())
+func (x *TxDB) Collection(colNm string, opts ...*options.CollectionOptions) *mongo.Collection {
+	return x.db.Collection(colNm, opts...)
+}
+
+func (x *TxDB) InsertOne(model IfTxModel) (err error) {
+	var col = x.db.Collection(model.GetColNm())
 	if _, err = col.InsertOne(x.ctx, model); err != nil {
 		return
 	}
 
 	x.insert = append(x.insert, &insertModel{
-		colNm: model.GetCollectionNm(),
+		colNm: model.GetColNm(),
 		id:    model.GetID(),
 	})
 
 	return
 }
 
-func (x *TxDB) InsertMany(
-	models []mtype.IfModel,
-) (err error) {
+func (x *TxDB) InsertMany(models []IfTxModel) (err error) {
 	if len(models) == 0 {
 		err = fmt.Errorf("fail insert many, empty models")
 		return
 	}
 
-	var colNm = models[0].GetCollectionNm()
+	var colNm = models[0].GetColNm()
 	var col = x.db.Collection(colNm)
 
 	var ls = make([]interface{}, len(models))
@@ -238,10 +207,20 @@ func (x *TxDB) InsertMany(
 	return
 }
 
+func (x *TxDB) UpdateOneOnlyLocked(
+	colNm string,
+	filter bson.M,
+	update bson.M,
+	opts ...*options.UpdateOptions,
+) (err error) {
+	filter[FieldInTxNm] = x.txId
+	return x.UpdateOne(colNm, filter, update, opts...)
+}
+
 func (x *TxDB) UpdateOne(
 	colNm string,
-	filter any,
-	update any,
+	filter bson.M,
+	update bson.M,
 	opts ...*options.UpdateOptions,
 ) (err error) {
 	var col = x.db.Collection(colNm)
@@ -270,11 +249,21 @@ func (x *TxDB) UpdateOne(
 	return
 }
 
+func (x *TxDB) UpdateManyOnlyLocked(
+	colNm string,
+	filter bson.M,
+	update bson.M,
+	opts ...*options.UpdateOptions,
+) (err error) {
+	filter[FieldInTxNm] = x.txId
+	return x.UpdateMany(colNm, filter, update, opts...)
+}
+
 // UpdateMany 1개씩 모두 불러와서 변경하므로 느려질수 있음을 인지해야 한다
 func (x *TxDB) UpdateMany(
 	colNm string,
-	filter any,
-	update any,
+	filter bson.M,
+	update bson.M,
 	opts ...*options.UpdateOptions,
 ) (err error) {
 	var col = x.db.Collection(colNm)
@@ -286,7 +275,12 @@ func (x *TxDB) UpdateMany(
 
 	for cur.Next(x.ctx) {
 		var id = cur.Current.Lookup("_id").ObjectID()
-		if err = x.UpdateOne(colNm, bson.M{"_id": id}, update, fnParams.Get(opts)); err != nil {
+		if err = x.UpdateOne(
+			colNm,
+			bson.M{"_id": id},
+			update,
+			fnParams.Get(opts),
+		); err != nil {
 			return
 		}
 	}
@@ -384,10 +378,18 @@ func (x *TxDB) Count(
 func (x *TxDB) FindOneAndLock(
 	colNm string,
 	filter bson.M,
-	model any,
+	model IfTxModel,
 	opts ...*options.FindOneAndUpdateOptions,
 ) (err error) {
-	var or, has = filter[mvars.OOr]
+	var orFilter = bson.A{
+		bson.M{
+			FieldInTxNm: bson.M{
+				"$exists": false,
+			},
+		},
+	}
+
+	var or, has = filter["$or"]
 	if has {
 		var array, isOk = or.(bson.A)
 		if !isOk {
@@ -395,17 +397,21 @@ func (x *TxDB) FindOneAndLock(
 			return
 		}
 
-		array = append(array, lockFilter...)
+		array = append(array, orFilter...)
 	} else {
-		filter[mvars.OOr] = lockFilter
+		filter["$or"] = orFilter
 	}
 
-	var col = mctx.GetDBP(x.ctx).Collection(colNm)
+	var col = x.db.Collection(colNm)
 	var res *mongo.SingleResult
 	if res = col.FindOneAndUpdate(
 		x.ctx,
 		filter,
-		updateLock,
+		bson.M{
+			"$set": bson.M{
+				FieldInTxNm: x.txId,
+			},
+		},
 		fnParams.Get(opts),
 	); res.Err() != nil {
 		err = res.Err()

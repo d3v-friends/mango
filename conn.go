@@ -12,36 +12,26 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 )
 
-type Mango struct {
-	client *mongo.Client
-	db     *mongo.Database
-}
-
-func NewMango(ctx context.Context, i *IConn) (res *Mango, err error) {
+func NewClient(i *IConn, iCtx ...context.Context) (res *mongo.Client, err error) {
 	if i == nil {
-		err = fmt.Errorf("not found mango.IConn")
+		err = fmt.Errorf("IConn is empty value")
 		return
 	}
 
-	res = &Mango{}
-	if res.client, err = mongo.Connect(ctx, i.options()); err != nil {
+	var ctx = context.TODO()
+	if len(iCtx) == 1 {
+		ctx = iCtx[0]
+	}
+
+	if res, err = mongo.Connect(ctx, i.options()); err != nil {
 		return
 	}
 
-	if err = res.client.Ping(ctx, readpref.Primary()); err != nil {
+	if err = res.Ping(ctx, readpref.Primary()); err != nil {
 		return
 	}
 
-	res.db = res.client.Database(i.Database)
 	return
-}
-
-func (x *Mango) Database() *mongo.Database {
-	return x.db
-}
-
-func (x *Mango) Migrate(ctx context.Context) (err error) {
-	panic("not impl")
 }
 
 /* ------------------------------------------------------------------------------------------------------------ */
@@ -52,7 +42,6 @@ type IConn struct {
 	Host        string
 	Username    string
 	Password    string
-	Database    string
 	SetRegistry FnSetRegistry
 }
 
@@ -74,5 +63,6 @@ func (x *IConn) options() (opt *options.ClientOptions) {
 	if x.SetRegistry != nil {
 		opt.Registry = x.SetRegistry(opt.Registry)
 	}
+
 	return
 }
