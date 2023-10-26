@@ -1,4 +1,4 @@
-package m_test
+package test
 
 import (
 	"github.com/d3v-friends/go-pure/fnMatch"
@@ -16,7 +16,7 @@ func TestMigrate(test *testing.T) {
 	var tool = NewTestTool(true)
 
 	test.Run("migrate", func(t *testing.T) {
-		var ctx = tool.Context()
+		var ctx = tool.NewCtxErr()
 		fnPanic.On(m_migrate.Migrate(
 			ctx,
 			tool.DB,

@@ -1,4 +1,4 @@
-package m_test
+package test
 
 import (
 	"context"
@@ -17,8 +17,8 @@ import (
 
 type DocTest struct {
 	Id        primitive.ObjectID `bson:"_id"`
-	IsTx      bool               `bson:"isTx"`
-	Content   string             `bson:"content"`
+	GroupId   primitive.ObjectID `bson:"groupId"`
+	Name      string             `bson:"name"`
 	CreatedAt time.Time          `bson:"createdAt"`
 }
 
@@ -61,7 +61,7 @@ type TestTool struct {
 	DB     *mongo.Database
 }
 
-func (x *TestTool) Context() (ctx context.Context) {
+func (x *TestTool) NewCtxErr() (ctx context.Context, err error) {
 	ctx = context.TODO()
 	ctx = m_ctx.SetDB(ctx, x.DB)
 	return

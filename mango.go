@@ -55,7 +55,6 @@ func GetMangoP(ctx context.Context) (m *Mango) {
 
 func NewMango(
 	i *IConn,
-	databaseNm string,
 	ctxs ...context.Context,
 ) (res *Mango, err error) {
 	res = &Mango{}
@@ -64,7 +63,7 @@ func NewMango(
 		return
 	}
 
-	res.DB = res.Client.Database(databaseNm)
+	res.DB = res.Client.Database(i.Database)
 
 	return
 }

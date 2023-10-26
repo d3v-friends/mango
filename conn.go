@@ -42,6 +42,7 @@ type IConn struct {
 	Host        string
 	Username    string
 	Password    string
+	Database    string
 	SetRegistry FnSetRegistry
 }
 
