@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/d3v-friends/go-pure/fnPanic"
-	"github.com/d3v-friends/mango/m_migrate"
-	"github.com/d3v-friends/mango/m_tx"
+	"github.com/d3v-friends/mango/mMigrate"
+	"github.com/d3v-friends/mango/mTx"
 	"go.mongodb.org/mongo-driver/mongo"
 	"time"
 )
@@ -16,16 +16,16 @@ type Mango struct {
 	DB     *mongo.Database
 }
 
-func (x *Mango) Migrate(ctx context.Context, models ...m_migrate.IfMigrateModel) (err error) {
-	return m_migrate.Migrate(ctx, x.DB, models...)
+func (x *Mango) Migrate(ctx context.Context, models ...mMigrate.IfMigrateModel) (err error) {
+	return mMigrate.Migrate(ctx, x.DB, models...)
 }
 
-func (x *Mango) Tx(ctx context.Context, fn m_tx.FnTx) (err error) {
-	return m_tx.Transact(ctx, x.DB, fn)
+func (x *Mango) Tx(ctx context.Context, fn mTx.FnTx) (err error) {
+	return mTx.Transact(ctx, x.DB, fn)
 }
 
-func (x *Mango) TxWithDelay(ctx context.Context, fn m_tx.FnTx, delay time.Duration) (err error) {
-	return m_tx.TransactWithDelay(ctx, x.DB, fn, delay)
+func (x *Mango) TxWithDelay(ctx context.Context, fn mTx.FnTx, delay time.Duration) (err error) {
+	return mTx.TransactWithDelay(ctx, x.DB, fn, delay)
 }
 
 func (x *Mango) Truncate(ctx context.Context) error {

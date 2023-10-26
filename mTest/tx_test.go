@@ -1,11 +1,11 @@
-package test
+package mTest
 
 import (
 	"context"
 	"fmt"
 	"github.com/brianvoe/gofakeit"
 	"github.com/d3v-friends/go-pure/fnPanic"
-	"github.com/d3v-friends/mango/m_tx"
+	"github.com/d3v-friends/mango/mTx"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -28,7 +28,7 @@ func TestTx(test *testing.T) {
 			CreatedAt: time.Now(),
 		}
 
-		if err = mg.Tx(ctx, func(tx *m_tx.TxDB) (txErr error) {
+		if err = mg.Tx(ctx, func(tx *mTx.TxDB) (txErr error) {
 			if err = tx.InsertOne(model); err != nil {
 				return
 			}
@@ -64,7 +64,7 @@ func TestTx(test *testing.T) {
 			CreatedAt: time.Now(),
 		}
 
-		if err = mg.Tx(ctx, func(txDB *m_tx.TxDB) (err error) {
+		if err = mg.Tx(ctx, func(txDB *mTx.TxDB) (err error) {
 			if err = txDB.InsertOne(model); err != nil {
 				return
 			}
@@ -98,7 +98,7 @@ func TestTx(test *testing.T) {
 			CreatedAt: time.Now(),
 		}
 
-		if err = mg.Tx(ctx, func(txDB *m_tx.TxDB) (err error) {
+		if err = mg.Tx(ctx, func(txDB *mTx.TxDB) (err error) {
 			if err = txDB.InsertOne(model); err != nil {
 				return
 			}
@@ -107,7 +107,7 @@ func TestTx(test *testing.T) {
 			t.Fatal(err)
 		}
 
-		if err = mg.Tx(ctx, func(txDB *m_tx.TxDB) (err error) {
+		if err = mg.Tx(ctx, func(txDB *mTx.TxDB) (err error) {
 			return txDB.UpdateOne(
 				model.GetColNm(),
 				bson.M{
@@ -152,7 +152,7 @@ func TestTx(test *testing.T) {
 			CreatedAt: time.Now(),
 		}
 
-		if err = mg.Tx(ctx, func(txDB *m_tx.TxDB) (err error) {
+		if err = mg.Tx(ctx, func(txDB *mTx.TxDB) (err error) {
 			if err = txDB.InsertOne(model); err != nil {
 				return
 			}
@@ -161,7 +161,7 @@ func TestTx(test *testing.T) {
 			t.Fatal(err)
 		}
 
-		if err = mg.Tx(ctx, func(txDB *m_tx.TxDB) (err error) {
+		if err = mg.Tx(ctx, func(txDB *mTx.TxDB) (err error) {
 			var name = gofakeit.BeerName()
 			err = txDB.UpdateOne(
 				model.GetColNm(),
@@ -220,10 +220,10 @@ func TestTx(test *testing.T) {
 		var err error
 		var try = 5
 
-		err = mg.Tx(ctx, func(txDB *m_tx.TxDB) (err error) {
+		err = mg.Tx(ctx, func(txDB *mTx.TxDB) (err error) {
 			var groupId = primitive.NewObjectID()
 			var now = time.Now()
-			var iModels = make([]m_tx.IfTxModel, try)
+			var iModels = make([]mTx.IfTxModel, try)
 
 			for i := 0; i < try; i++ {
 				iModels[i] = &DocTest{
@@ -266,7 +266,7 @@ func TestTx(test *testing.T) {
 
 		var groupId = primitive.NewObjectID()
 		var now = time.Now()
-		var models = make([]m_tx.IfTxModel, try)
+		var models = make([]mTx.IfTxModel, try)
 		var iModels = make([]interface{}, try)
 		var model = DocTest{}
 		var colNm = model.GetColNm()
@@ -288,7 +288,7 @@ func TestTx(test *testing.T) {
 		}
 
 		var updatedName = gofakeit.Name()
-		_ = mg.Tx(ctx, func(txDB *m_tx.TxDB) (err error) {
+		_ = mg.Tx(ctx, func(txDB *mTx.TxDB) (err error) {
 			if err = txDB.UpdateMany(
 				colNm,
 				bson.M{
@@ -342,7 +342,7 @@ func TestTx(test *testing.T) {
 			t.Fatal(err)
 		}
 
-		err = mg.Tx(ctx, func(txDB *m_tx.TxDB) (err error) {
+		err = mg.Tx(ctx, func(txDB *mTx.TxDB) (err error) {
 			return txDB.DeleteOne(model.GetColNm(), bson.M{
 				"_id": model.Id,
 			})
@@ -377,7 +377,7 @@ func TestTx(test *testing.T) {
 			t.Fatal(err)
 		}
 
-		err = mg.Tx(ctx, func(txDB *m_tx.TxDB) (err error) {
+		err = mg.Tx(ctx, func(txDB *mTx.TxDB) (err error) {
 			err = txDB.DeleteOne(
 				model.GetColNm(),
 				bson.M{
@@ -412,7 +412,7 @@ func TestTx(test *testing.T) {
 		var id = primitive.NewObjectID()
 		go mg.TxWithDelay(
 			ctx,
-			func(tx *m_tx.TxDB) (txErr error) {
+			func(tx *mTx.TxDB) (txErr error) {
 				var model = &DocTest{
 					Id:        id,
 					GroupId:   primitive.NewObjectID(),

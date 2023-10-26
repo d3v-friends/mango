@@ -1,8 +1,8 @@
-package m_migrate
+package mMigrate
 
 import (
 	"context"
-	"github.com/d3v-friends/mango/m_tx"
+	"github.com/d3v-friends/mango/mTx"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -11,7 +11,7 @@ import (
 
 type (
 	IfMigrateModel interface {
-		m_tx.IfTxModel
+		mTx.IfTxModel
 		GetMigrateList() FnMigrateList
 	}
 
@@ -42,7 +42,7 @@ func migrateDoc(
 	db *mongo.Database,
 	model IfMigrateModel,
 ) error {
-	return m_tx.Transact(ctx, db, func(tx *m_tx.TxDB) (err error) {
+	return mTx.Transact(ctx, db, func(tx *mTx.TxDB) (err error) {
 		var migColNm = model.GetColNm()
 
 		var count int64
@@ -83,7 +83,7 @@ func migrateDoc(
 				_, err = col.Indexes().CreateOne(ctx, mongo.IndexModel{
 					Keys: bson.D{
 						{
-							Key:   m_tx.FieldInTxNm,
+							Key:   mTx.FieldInTxNm,
 							Value: 1,
 						},
 					},

@@ -1,9 +1,9 @@
-package m_tx
+package mTx
 
 import (
 	"context"
 	"github.com/d3v-friends/go-pure/fnPanic"
-	"github.com/d3v-friends/mango/m_ctx"
+	"github.com/d3v-friends/mango/mCtx"
 	"go.mongodb.org/mongo-driver/mongo"
 	"time"
 )
@@ -32,7 +32,7 @@ func IncludeCtx(
 	ctx context.Context,
 	fn FnTx,
 ) (err error) {
-	var db = m_ctx.GetDBP(ctx)
+	var db = mCtx.GetDBP(ctx)
 	return Transact(ctx, db, fn)
 }
 

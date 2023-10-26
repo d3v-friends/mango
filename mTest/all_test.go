@@ -1,4 +1,4 @@
-package test
+package mTest
 
 import (
 	"context"
@@ -6,8 +6,6 @@ import (
 	"github.com/d3v-friends/go-pure/fnPanic"
 	"github.com/d3v-friends/go-pure/fnParams"
 	"github.com/d3v-friends/mango"
-	"github.com/d3v-friends/mango/m_codec"
-	"github.com/d3v-friends/mango/m_migrate"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -29,13 +27,13 @@ func (x *DocTest) GetColNm() string {
 	return docTestNm
 }
 
-func (x *DocTest) GetMigrateList() m_migrate.FnMigrateList {
+func (x *DocTest) GetMigrateList() mMigrate.FnMigrateList {
 	return mgDocTest
 }
 
 const docTestNm = "docTests"
 
-var mgDocTest = m_migrate.FnMigrateList{
+var mgDocTest = mMigrate.FnMigrateList{
 	func(ctx context.Context, col *mongo.Collection) (memo string, err error) {
 		memo = "indexing name"
 		_, err = col.Indexes().CreateOne(ctx, mongo.IndexModel{
@@ -60,7 +58,7 @@ func NewMango(truncate ...bool) (res *mango.Mango) {
 			Username:    fnEnv.Read("MG_USERNAME"),
 			Password:    fnEnv.Read("MG_PASSWORD"),
 			Database:    fnEnv.Read("MG_DATABASE"),
-			SetRegistry: m_codec.RegisterDecimal,
+			SetRegistry: mcodec.RegisterDecimal,
 		},
 	))
 

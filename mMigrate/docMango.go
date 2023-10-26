@@ -1,4 +1,4 @@
-package m_migrate
+package mMigrate
 
 import (
 	"context"

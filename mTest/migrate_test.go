@@ -1,10 +1,9 @@
-package test
+package mTest
 
 import (
 	"context"
 	"github.com/d3v-friends/go-pure/fnMatch"
 	"github.com/d3v-friends/go-pure/fnPanic"
-	"github.com/d3v-friends/mango/m_migrate"
 	"testing"
 )
 
@@ -19,7 +18,7 @@ func TestMigrate(test *testing.T) {
 	test.Run("migrate", func(t *testing.T) {
 		var ctx = context.TODO()
 
-		fnPanic.On(m_migrate.Migrate(
+		fnPanic.On(mMigrate.Migrate(
 			ctx,
 			mg.DB,
 			&DocTest{},

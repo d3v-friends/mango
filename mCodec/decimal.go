@@ -1,4 +1,4 @@
-package m_codec
+package mCodec
 
 import (
 	"errors"
