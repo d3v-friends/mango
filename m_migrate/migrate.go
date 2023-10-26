@@ -24,11 +24,11 @@ func Migrate(
 	db *mongo.Database,
 	models ...IfMigrateModel,
 ) (err error) {
-	if err = migrateDoc(ctx, db, &DocMango{}); err != nil {
-		return
-	}
+	var ls = make([]IfMigrateModel, 0)
+	ls = append(ls, &DocMango{})
+	ls = append(ls, models...)
 
-	for _, model := range models {
+	for _, model := range ls {
 		if err = migrateDoc(ctx, db, model); err != nil {
 			return
 		}
@@ -42,21 +42,22 @@ func migrateDoc(
 	db *mongo.Database,
 	model IfMigrateModel,
 ) error {
-
 	return m_tx.Transact(ctx, db, func(tx *m_tx.TxDB) (err error) {
-		var colNm = model.GetColNm()
+		var migColNm = model.GetColNm()
 
 		var count int64
-		if count, err = tx.Count(colNm, bson.M{
-			"colNm": colNm,
-		}); err != nil {
+		if count, err = tx.Count(
+			docMangoNm,
+			bson.M{
+				"colNm": migColNm,
+			}); err != nil {
 			return
 		}
 
 		if count == 0 {
 			if err = tx.InsertOne(&DocMango{
 				Id:        primitive.NewObjectID(),
-				ColNm:     colNm,
+				ColNm:     migColNm,
 				NextIdx:   0,
 				Histories: make([]*DocMangoHistory, 0),
 				CreatedAt: time.Now(),
@@ -69,7 +70,7 @@ func migrateDoc(
 		if err = tx.FindOneAndLock(
 			docMangoNm,
 			bson.M{
-				"colNm": colNm,
+				"colNm": migColNm,
 			},
 			loadedModal,
 		); err != nil {
@@ -97,7 +98,7 @@ func migrateDoc(
 			return
 		}
 
-		var col = tx.Collection(colNm)
+		var col = tx.Collection(migColNm)
 		for i := loadedModal.NextIdx; i < len(migrateList); i++ {
 			var fnMigrate = migrateList[i]
 			var memo string
@@ -109,8 +110,9 @@ func migrateDoc(
 			if err = tx.UpdateOneOnlyLocked(
 				docMangoNm,
 				bson.M{
-					"colNm": colNm,
-				}, bson.M{
+					"colNm": migColNm,
+				},
+				bson.M{
 					"$set": bson.M{
 						"nextIdx":   i + 1,
 						"updatedAt": now,

@@ -7,7 +7,6 @@ import (
 	"github.com/d3v-friends/go-pure/fnParams"
 	"github.com/d3v-friends/mango"
 	"github.com/d3v-friends/mango/m_codec"
-	"github.com/d3v-friends/mango/m_ctx"
 	"github.com/d3v-friends/mango/m_migrate"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -30,10 +29,6 @@ func (x *DocTest) GetColNm() string {
 	return docTestNm
 }
 
-func (x *DocTest) GetTxNm() string {
-	return "isTx"
-}
-
 func (x *DocTest) GetMigrateList() m_migrate.FnMigrateList {
 	return mgDocTest
 }
@@ -42,11 +37,11 @@ const docTestNm = "docTests"
 
 var mgDocTest = m_migrate.FnMigrateList{
 	func(ctx context.Context, col *mongo.Collection) (memo string, err error) {
-		memo = "indexing content"
-		_, err = col.InsertOne(ctx, mongo.IndexModel{
+		memo = "indexing name"
+		_, err = col.Indexes().CreateOne(ctx, mongo.IndexModel{
 			Keys: bson.D{
 				{
-					Key:   "content",
+					Key:   "name",
 					Value: 1,
 				},
 			},
@@ -56,32 +51,21 @@ var mgDocTest = m_migrate.FnMigrateList{
 }
 
 /* ------------------------------------------------------------------------------------------------------------ */
-type TestTool struct {
-	Client *mongo.Client
-	DB     *mongo.Database
-}
 
-func (x *TestTool) NewCtxErr() (ctx context.Context, err error) {
-	ctx = context.TODO()
-	ctx = m_ctx.SetDB(ctx, x.DB)
-	return
-}
-
-func NewTestTool(truncate ...bool) (res *TestTool) {
+func NewMango(truncate ...bool) (res *mango.Mango) {
 	fnPanic.On(fnEnv.ReadFromFile("../env/.env"))
-
-	res = &TestTool{}
-	res.Client = fnPanic.Get(mango.NewClient(&mango.IConn{
-		Host:        fnEnv.Read("MG_HOST"),
-		Username:    fnEnv.Read("MG_USERNAME"),
-		Password:    fnEnv.Read("MG_PASSWORD"),
-		SetRegistry: m_codec.RegisterDecimal,
-	}))
-
-	res.DB = res.Client.Database(fnEnv.Read("MG_DATABASE"))
+	res = fnPanic.Get(mango.NewMango(
+		&mango.IConn{
+			Host:        fnEnv.Read("MG_HOST"),
+			Username:    fnEnv.Read("MG_USERNAME"),
+			Password:    fnEnv.Read("MG_PASSWORD"),
+			Database:    fnEnv.Read("MG_DATABASE"),
+			SetRegistry: m_codec.RegisterDecimal,
+		},
+	))
 
 	if fnParams.Get(truncate) {
-		fnPanic.On(res.DB.Drop(context.TODO()))
+		fnPanic.On(res.Truncate(context.TODO()))
 	}
 
 	return

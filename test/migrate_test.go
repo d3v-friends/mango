@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"github.com/d3v-friends/go-pure/fnMatch"
 	"github.com/d3v-friends/go-pure/fnPanic"
 	"github.com/d3v-friends/mango/m_migrate"
@@ -13,17 +14,18 @@ type Index struct {
 }
 
 func TestMigrate(test *testing.T) {
-	var tool = NewTestTool(true)
+	var mg = NewMango(true)
 
 	test.Run("migrate", func(t *testing.T) {
-		var ctx = tool.NewCtxErr()
+		var ctx = context.TODO()
+
 		fnPanic.On(m_migrate.Migrate(
 			ctx,
-			tool.DB,
+			mg.DB,
 			&DocTest{},
 		))
 
-		var cursor = fnPanic.Get(tool.DB.Collection(docTestNm).Indexes().List(ctx))
+		var cursor = fnPanic.Get(mg.DB.Collection(docTestNm).Indexes().List(ctx))
 
 		var nameLs = []string{
 			"_id_",

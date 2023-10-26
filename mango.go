@@ -8,6 +8,7 @@ import (
 	"github.com/d3v-friends/mango/m_migrate"
 	"github.com/d3v-friends/mango/m_tx"
 	"go.mongodb.org/mongo-driver/mongo"
+	"time"
 )
 
 type Mango struct {
@@ -21,6 +22,14 @@ func (x *Mango) Migrate(ctx context.Context, models ...m_migrate.IfMigrateModel)
 
 func (x *Mango) Tx(ctx context.Context, fn m_tx.FnTx) (err error) {
 	return m_tx.Transact(ctx, x.DB, fn)
+}
+
+func (x *Mango) TxWithDelay(ctx context.Context, fn m_tx.FnTx, delay time.Duration) (err error) {
+	return m_tx.TransactWithDelay(ctx, x.DB, fn, delay)
+}
+
+func (x *Mango) Truncate(ctx context.Context) error {
+	return x.DB.Drop(ctx)
 }
 
 /* ------------------------------------------------------------------------------------------------------------ */

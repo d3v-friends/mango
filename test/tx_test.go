@@ -4,10 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/brianvoe/gofakeit"
-	"github.com/d3v-friends/go-pure/fnEnv"
 	"github.com/d3v-friends/go-pure/fnPanic"
-	"github.com/d3v-friends/mango"
-	"github.com/d3v-friends/mango/m_codec"
 	"github.com/d3v-friends/mango/m_tx"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson"
@@ -18,23 +15,13 @@ import (
 )
 
 func TestTx(test *testing.T) {
-	fnPanic.On(fnEnv.ReadFromFile("../env/.env"))
-	var mg = fnPanic.Get(mango.NewMango(
-		&mango.IConn{
-			Host:        fnEnv.Read("MG_HOST"),
-			Username:    fnEnv.Read("MG_USERNAME"),
-			Password:    fnEnv.Read("MG_PASSWORD"),
-			Database:    fnEnv.Read("MG_DATABASE"),
-			SetRegistry: m_codec.RegisterDecimal,
-		},
-	))
+	var mg = NewMango(true)
 
 	fnPanic.On(mg.Migrate(context.TODO(), &DocTest{}))
 
-	var tool = NewTestTool(true)
-
 	test.Run("insert one", func(t *testing.T) {
-		var ctx, err = tool.NewCtxErr()
+		var ctx = context.TODO()
+		var err error
 		var model = &DocTest{
 			Id:        primitive.NewObjectID(),
 			Name:      gofakeit.Name(),
@@ -68,7 +55,8 @@ func TestTx(test *testing.T) {
 	})
 
 	test.Run("insert one rollback", func(t *testing.T) {
-		var ctx, err = tool.NewCtxErr()
+		var ctx = context.TODO()
+		var err error
 
 		var model = &DocTest{
 			Id:        primitive.NewObjectID(),
@@ -101,7 +89,8 @@ func TestTx(test *testing.T) {
 	})
 
 	test.Run("update one", func(t *testing.T) {
-		var ctx, err = tool.NewCtxErr()
+		var ctx = context.TODO()
+		var err error
 
 		var model = &DocTest{
 			Id:        primitive.NewObjectID(),
@@ -155,7 +144,8 @@ func TestTx(test *testing.T) {
 	})
 
 	test.Run("update one rollback", func(t *testing.T) {
-		var ctx, err = tool.NewCtxErr()
+		var ctx = context.TODO()
+		var err error
 		var model = &DocTest{
 			Id:        primitive.NewObjectID(),
 			Name:      gofakeit.Name(),
@@ -226,7 +216,8 @@ func TestTx(test *testing.T) {
 	})
 
 	test.Run("update many", func(t *testing.T) {
-		var ctx, err = tool.NewCtxErr()
+		var ctx = context.TODO()
+		var err error
 		var try = 5
 
 		err = mg.Tx(ctx, func(txDB *m_tx.TxDB) (err error) {
@@ -269,7 +260,8 @@ func TestTx(test *testing.T) {
 	})
 
 	test.Run("update many rollback", func(t *testing.T) {
-		var ctx, err = tool.NewCtxErr()
+		var ctx = context.TODO()
+		var err error
 		var try = 5
 
 		var groupId = primitive.NewObjectID()
@@ -335,7 +327,8 @@ func TestTx(test *testing.T) {
 	})
 
 	test.Run("delete one", func(t *testing.T) {
-		var ctx, err = tool.NewCtxErr()
+		var ctx = context.TODO()
+		var err error
 		var model = &DocTest{
 			Id:        primitive.NewObjectID(),
 			GroupId:   primitive.NewObjectID(),
@@ -369,7 +362,8 @@ func TestTx(test *testing.T) {
 	})
 
 	test.Run("delete one rollback", func(t *testing.T) {
-		var ctx, err = tool.NewCtxErr()
+		var ctx = context.TODO()
+		var err error
 		var model = &DocTest{
 			Id:        primitive.NewObjectID(),
 			GroupId:   primitive.NewObjectID(),
@@ -409,6 +403,40 @@ func TestTx(test *testing.T) {
 		}
 
 		assert.Equal(t, 1, int(count))
+
+	})
+
+	test.Run("lock test", func(t *testing.T) {
+		var ctx = context.TODO()
+
+		var id = primitive.NewObjectID()
+		go mg.TxWithDelay(
+			ctx,
+			func(tx *m_tx.TxDB) (txErr error) {
+				var model = &DocTest{
+					Id:        id,
+					GroupId:   primitive.NewObjectID(),
+					Name:      gofakeit.BeerName(),
+					CreatedAt: time.Now(),
+				}
+
+				txErr = tx.InsertOne(model)
+
+				return
+			},
+			5*time.Second,
+		)
+
+		var count = fnPanic.Get(mg.DB.Collection(docTestNm).CountDocuments(
+			ctx,
+			bson.M{
+				"_id": id,
+			},
+		))
+
+		assert.Equal(t, int64(1), count)
+
+		time.Sleep(8 * time.Second)
 
 	})
 }
