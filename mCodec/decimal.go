@@ -1,4 +1,4 @@
-package mcodec
+package mCodec
 
 import (
 	"errors"
@@ -17,7 +17,7 @@ type (
 	}
 )
 
-func AppendDecimalCodec(registry *bsoncodec.Registry) *bsoncodec.Registry {
+func RegisterDecimal(registry *bsoncodec.Registry) *bsoncodec.Registry {
 	registry.RegisterTypeEncoder(DecimalCodecRegister())
 	registry.RegisterTypeDecoder(DecimalCodecRegister())
 	return registry

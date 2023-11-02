@@ -1,15 +1,11 @@
-package mtx
+package mTest
 
 import (
 	"context"
 	"fmt"
 	"github.com/brianvoe/gofakeit"
-	"github.com/d3v-friends/go-pure/fnEnv"
 	"github.com/d3v-friends/go-pure/fnPanic"
-	"github.com/d3v-friends/mango/fn/fnMango"
-	"github.com/d3v-friends/mango/mcodec"
-	"github.com/d3v-friends/mango/mctx"
-	"github.com/d3v-friends/mango/mtype"
+	"github.com/d3v-friends/mango/mTx"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -19,30 +15,21 @@ import (
 )
 
 func TestTx(test *testing.T) {
-	fnPanic.On(fnEnv.ReadFromFile("../env/.env"))
+	var mg = NewMango(true)
 
-	var client = fnPanic.OnValue(fnMango.Connect(context.Background(), &fnMango.IConnect{
-		Host:        fnEnv.Read("MG_HOST"),
-		Username:    fnEnv.Read("MG_USERNAME"),
-		Password:    fnEnv.Read("MG_PASSWORD"),
-		SetRegistry: mcodec.AppendDecimalCodec,
-	}))
-
-	var db = client.Database(fnEnv.Read("MG_DATABASE"))
-	var err = fnMango.Migrate(context.TODO(), db, &testModel{})
-	var tool = newTestTool(db)
+	fnPanic.On(mg.Migrate(context.TODO(), &DocTest{}))
 
 	test.Run("insert one", func(t *testing.T) {
-		var ctx = tool.Context()
-
-		var model = &testModel{
+		var ctx = context.TODO()
+		var err error
+		var model = &DocTest{
 			Id:        primitive.NewObjectID(),
 			Name:      gofakeit.Name(),
 			CreatedAt: time.Now(),
 		}
 
-		if err = Transact(ctx, func(txDB *TxDB) (err error) {
-			if err = txDB.InsertOne(model); err != nil {
+		if err = mg.Tx(ctx, func(tx *mTx.TxDB) (txErr error) {
+			if err = tx.InsertOne(model); err != nil {
 				return
 			}
 			return
@@ -51,9 +38,16 @@ func TestTx(test *testing.T) {
 		}
 
 		var has int64
-		if has, err = db.Collection(model.GetCollectionNm()).CountDocuments(ctx, bson.M{
-			"_id": model.Id,
-		}); err != nil {
+		if has, err = mg.DB.
+			Collection(
+				model.GetColNm(),
+			).
+			CountDocuments(
+				ctx,
+				bson.M{
+					"_id": model.Id,
+				},
+			); err != nil {
 			t.Fatal(err)
 		}
 
@@ -61,18 +55,19 @@ func TestTx(test *testing.T) {
 	})
 
 	test.Run("insert one rollback", func(t *testing.T) {
-		var ctx = tool.Context()
-		var model = &testModel{
+		var ctx = context.TODO()
+		var err error
+
+		var model = &DocTest{
 			Id:        primitive.NewObjectID(),
 			Name:      gofakeit.Name(),
 			CreatedAt: time.Now(),
 		}
 
-		if err = Transact(ctx, func(txDB *TxDB) (err error) {
+		if err = mg.Tx(ctx, func(txDB *mTx.TxDB) (err error) {
 			if err = txDB.InsertOne(model); err != nil {
 				return
 			}
-
 			err = fmt.Errorf("occure err to rollback")
 			return
 		}); err != nil {
@@ -80,9 +75,13 @@ func TestTx(test *testing.T) {
 		}
 
 		var has int64
-		if has, err = db.Collection(model.GetCollectionNm()).CountDocuments(ctx, bson.M{
-			"_id": model.Id,
-		}); err != nil {
+		if has, err = mg.DB.Collection(model.GetColNm()).
+			CountDocuments(
+				ctx,
+				bson.M{
+					"_id": model.Id,
+				},
+			); err != nil {
 			t.Fatal(err)
 		}
 
@@ -90,14 +89,16 @@ func TestTx(test *testing.T) {
 	})
 
 	test.Run("update one", func(t *testing.T) {
-		var ctx = tool.Context()
-		var model = &testModel{
+		var ctx = context.TODO()
+		var err error
+
+		var model = &DocTest{
 			Id:        primitive.NewObjectID(),
 			Name:      gofakeit.Name(),
 			CreatedAt: time.Now(),
 		}
 
-		if err = Transact(ctx, func(txDB *TxDB) (err error) {
+		if err = mg.Tx(ctx, func(txDB *mTx.TxDB) (err error) {
 			if err = txDB.InsertOne(model); err != nil {
 				return
 			}
@@ -106,9 +107,10 @@ func TestTx(test *testing.T) {
 			t.Fatal(err)
 		}
 
-		if err = Transact(ctx, func(txDB *TxDB) (err error) {
+		if err = mg.Tx(ctx, func(txDB *mTx.TxDB) (err error) {
 			return txDB.UpdateOne(
-				model.GetCollectionNm(), bson.M{
+				model.GetColNm(),
+				bson.M{
 					"_id": model.Id,
 				},
 				bson.M{
@@ -121,15 +123,18 @@ func TestTx(test *testing.T) {
 			t.Fatal(err)
 		}
 
-		var col = mctx.GetDBP(ctx).Collection(model.GetCollectionNm())
+		var col = mg.DB.Collection(model.GetColNm())
 		var res *mongo.SingleResult
-		if res = col.FindOne(ctx, bson.M{
-			"_id": model.Id,
-		}); res.Err() != nil {
+		if res = col.FindOne(
+			ctx,
+			bson.M{
+				"_id": model.Id,
+			},
+		); res.Err() != nil {
 			t.Fatal(res.Err())
 		}
 
-		var loadedModel = &testModel{}
+		var loadedModel = &DocTest{}
 		if err = res.Decode(loadedModel); err != nil {
 			t.Fatal(err)
 		}
@@ -139,14 +144,15 @@ func TestTx(test *testing.T) {
 	})
 
 	test.Run("update one rollback", func(t *testing.T) {
-		var ctx = tool.Context()
-		var model = &testModel{
+		var ctx = context.TODO()
+		var err error
+		var model = &DocTest{
 			Id:        primitive.NewObjectID(),
 			Name:      gofakeit.Name(),
 			CreatedAt: time.Now(),
 		}
 
-		if err = Transact(ctx, func(txDB *TxDB) (err error) {
+		if err = mg.Tx(ctx, func(txDB *mTx.TxDB) (err error) {
 			if err = txDB.InsertOne(model); err != nil {
 				return
 			}
@@ -155,10 +161,11 @@ func TestTx(test *testing.T) {
 			t.Fatal(err)
 		}
 
-		if err = Transact(ctx, func(txDB *TxDB) (err error) {
+		if err = mg.Tx(ctx, func(txDB *mTx.TxDB) (err error) {
 			var name = gofakeit.BeerName()
 			err = txDB.UpdateOne(
-				model.GetCollectionNm(), bson.M{
+				model.GetColNm(),
+				bson.M{
 					"_id": model.Id,
 				},
 				bson.M{
@@ -170,7 +177,7 @@ func TestTx(test *testing.T) {
 
 			var res *mongo.SingleResult
 			if res = txDB.FindOne(
-				model.GetCollectionNm(),
+				model.GetColNm(),
 				bson.M{
 					"_id": model.Id,
 				},
@@ -178,7 +185,7 @@ func TestTx(test *testing.T) {
 				return
 			}
 
-			var loadedModel = &testModel{}
+			var loadedModel = &DocTest{}
 			if err = res.Decode(loadedModel); err != nil {
 				return
 			}
@@ -191,7 +198,7 @@ func TestTx(test *testing.T) {
 			t.Fatal(err)
 		}
 
-		var col = mctx.GetDBP(ctx).Collection(model.GetCollectionNm())
+		var col = mg.DB.Collection(model.GetColNm())
 		var res *mongo.SingleResult
 		if res = col.FindOne(ctx, bson.M{
 			"_id": model.Id,
@@ -199,7 +206,7 @@ func TestTx(test *testing.T) {
 			t.Fatal(res.Err())
 		}
 
-		var loadedModel = &testModel{}
+		var loadedModel = &DocTest{}
 		if err = res.Decode(loadedModel); err != nil {
 			t.Fatal(err)
 		}
@@ -209,15 +216,17 @@ func TestTx(test *testing.T) {
 	})
 
 	test.Run("update many", func(t *testing.T) {
-		var ctx = tool.Context()
+		var ctx = context.TODO()
+		var err error
 		var try = 5
 
-		err = Transact(ctx, func(txDB *TxDB) (err error) {
+		err = mg.Tx(ctx, func(txDB *mTx.TxDB) (err error) {
 			var groupId = primitive.NewObjectID()
 			var now = time.Now()
-			var iModels = make([]mtype.IfModel, try)
+			var iModels = make([]mTx.IfTxModel, try)
+
 			for i := 0; i < try; i++ {
-				iModels[i] = &testModel{
+				iModels[i] = &DocTest{
 					Id:        primitive.NewObjectID(),
 					GroupId:   groupId,
 					Name:      gofakeit.Name(),
@@ -230,9 +239,12 @@ func TestTx(test *testing.T) {
 			}
 
 			var count int64
-			if count, err = txDB.Count(iModels[0].GetCollectionNm(), bson.M{
-				"groupId": groupId,
-			}); err != nil {
+			if count, err = txDB.Count(
+				iModels[0].GetColNm(),
+				bson.M{
+					"groupId": groupId,
+				},
+			); err != nil {
 				t.Fatal(err)
 			}
 
@@ -248,17 +260,18 @@ func TestTx(test *testing.T) {
 	})
 
 	test.Run("update many rollback", func(t *testing.T) {
-		var ctx = tool.Context()
+		var ctx = context.TODO()
+		var err error
 		var try = 5
 
 		var groupId = primitive.NewObjectID()
 		var now = time.Now()
-		var models = make([]mtype.IfModel, try)
+		var models = make([]mTx.IfTxModel, try)
 		var iModels = make([]interface{}, try)
-		var model = testModel{}
-		var colNm = model.GetCollectionNm()
+		var model = DocTest{}
+		var colNm = model.GetColNm()
 		for i := 0; i < try; i++ {
-			models[i] = &testModel{
+			models[i] = &DocTest{
 				Id:        primitive.NewObjectID(),
 				GroupId:   groupId,
 				Name:      gofakeit.Name(),
@@ -268,12 +281,14 @@ func TestTx(test *testing.T) {
 			iModels[i] = models[i]
 		}
 
-		if _, err = tool.db.Collection(colNm).InsertMany(ctx, iModels); err != nil {
+		if _, err = mg.DB.
+			Collection(colNm).
+			InsertMany(ctx, iModels); err != nil {
 			t.Fatal(err)
 		}
 
 		var updatedName = gofakeit.Name()
-		_ = Transact(ctx, func(txDB *TxDB) (err error) {
+		_ = mg.Tx(ctx, func(txDB *mTx.TxDB) (err error) {
 			if err = txDB.UpdateMany(
 				colNm,
 				bson.M{
@@ -302,7 +317,7 @@ func TestTx(test *testing.T) {
 		})
 
 		var count int64
-		if count, err = tool.db.Collection(colNm).CountDocuments(ctx, bson.M{
+		if count, err = mg.DB.Collection(colNm).CountDocuments(ctx, bson.M{
 			"name": updatedName,
 		}); err != nil {
 			t.Fatal(err)
@@ -312,30 +327,33 @@ func TestTx(test *testing.T) {
 	})
 
 	test.Run("delete one", func(t *testing.T) {
-		var ctx = tool.Context()
-		var model = &testModel{
+		var ctx = context.TODO()
+		var err error
+		var model = &DocTest{
 			Id:        primitive.NewObjectID(),
 			GroupId:   primitive.NewObjectID(),
 			Name:      gofakeit.Name(),
 			CreatedAt: time.Now(),
 		}
 
-		if _, err = tool.db.
-			Collection(model.GetCollectionNm()).
+		if _, err = mg.DB.
+			Collection(model.GetColNm()).
 			InsertOne(ctx, model); err != nil {
 			t.Fatal(err)
 		}
 
-		err = Transact(ctx, func(txDB *TxDB) (err error) {
-			return txDB.DeleteOne(model.GetCollectionNm(), bson.M{
+		err = mg.Tx(ctx, func(txDB *mTx.TxDB) (err error) {
+			return txDB.DeleteOne(model.GetColNm(), bson.M{
 				"_id": model.Id,
 			})
 		})
 
 		var count int64
-		if count, err = tool.db.Collection(model.GetCollectionNm()).CountDocuments(ctx, bson.M{
-			"_id": model.Id,
-		}); err != nil {
+		if count, err = mg.DB.
+			Collection(model.GetColNm()).
+			CountDocuments(ctx, bson.M{
+				"_id": model.Id,
+			}); err != nil {
 			t.Fatal(err)
 		}
 
@@ -344,24 +362,28 @@ func TestTx(test *testing.T) {
 	})
 
 	test.Run("delete one rollback", func(t *testing.T) {
-		var ctx = tool.Context()
-		var model = &testModel{
+		var ctx = context.TODO()
+		var err error
+		var model = &DocTest{
 			Id:        primitive.NewObjectID(),
 			GroupId:   primitive.NewObjectID(),
 			Name:      gofakeit.Name(),
 			CreatedAt: time.Now(),
 		}
 
-		if _, err = tool.db.
-			Collection(model.GetCollectionNm()).
+		if _, err = mg.DB.
+			Collection(model.GetColNm()).
 			InsertOne(ctx, model); err != nil {
 			t.Fatal(err)
 		}
 
-		err = Transact(ctx, func(txDB *TxDB) (err error) {
-			err = txDB.DeleteOne(model.GetCollectionNm(), bson.M{
-				"_id": model.Id,
-			})
+		err = mg.Tx(ctx, func(txDB *mTx.TxDB) (err error) {
+			err = txDB.DeleteOne(
+				model.GetColNm(),
+				bson.M{
+					"_id": model.Id,
+				},
+			)
 
 			if err != nil {
 				return
@@ -372,13 +394,49 @@ func TestTx(test *testing.T) {
 		})
 
 		var count int64
-		if count, err = tool.db.Collection(model.GetCollectionNm()).CountDocuments(ctx, bson.M{
-			"_id": model.Id,
-		}); err != nil {
+		if count, err = mg.DB.
+			Collection(model.GetColNm()).
+			CountDocuments(ctx, bson.M{
+				"_id": model.Id,
+			}); err != nil {
 			t.Fatal(err)
 		}
 
 		assert.Equal(t, 1, int(count))
+
+	})
+
+	test.Run("lock test", func(t *testing.T) {
+		var ctx = context.TODO()
+
+		var id = primitive.NewObjectID()
+		go mg.TxWithDelay(
+			ctx,
+			func(tx *mTx.TxDB) (txErr error) {
+				var model = &DocTest{
+					Id:        id,
+					GroupId:   primitive.NewObjectID(),
+					Name:      gofakeit.BeerName(),
+					CreatedAt: time.Now(),
+				}
+
+				txErr = tx.InsertOne(model)
+
+				return
+			},
+			5*time.Second,
+		)
+
+		var count = fnPanic.Get(mg.DB.Collection(docTestNm).CountDocuments(
+			ctx,
+			bson.M{
+				"_id": id,
+			},
+		))
+
+		assert.Equal(t, int64(1), count)
+
+		time.Sleep(8 * time.Second)
 
 	})
 }

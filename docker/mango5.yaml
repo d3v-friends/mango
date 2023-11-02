@@ -1,21 +1,19 @@
 version: "3.8"
 services:
   mongodb:
-    image: docker.dev-friends.com/mango5
+    image: docker.stdlib.in/mango:5
     container_name: mongodb
     command: [
       "mongod",
       "--bind_ip_all",
       "--port", "10000",
-      "--keyFile", "/ssl/mongodb.key",
+      "--keyFile", "/mongodb.key",
       "--wiredTigerCacheSizeGB", "2",
     ]
-    volumes:
-      - "~/mongo/db/:/data/"
     environment:
       TZ: "ETC/UTC"
       MONGO_INITDB_ROOT_USERNAME: "root"
-      MONGO_INITDB_ROOT_PASSWORD: "sms1234"
+      MONGO_INITDB_ROOT_PASSWORD: "local1234"
     ports:
       - "10000:10000"
     networks:
