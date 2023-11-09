@@ -60,6 +60,24 @@ func GetMangoP(ctx context.Context) (m *Mango) {
 	return
 }
 
+func GetCol(ctx context.Context, colNm string) (col *mongo.Collection, err error) {
+	var m *Mango
+	if m, err = GetMango(ctx); err != nil {
+		return
+	}
+
+	col = m.DB.Collection(colNm)
+	return
+}
+
+func GetColP(ctx context.Context, colNm string) (col *mongo.Collection) {
+	var err error
+	if col, err = GetCol(ctx, colNm); err != nil {
+		panic(err)
+	}
+	return
+}
+
 /* ------------------------------------------------------------------------------------------------------------ */
 
 func NewMango(
