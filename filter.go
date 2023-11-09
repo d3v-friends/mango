@@ -199,3 +199,25 @@ func (x *Period) Filter() (filter bson.M, err error) {
 
 	return
 }
+
+type IfPeriod interface {
+	GT() *time.Time
+	GTE() *time.Time
+	LT() *time.Time
+	LTE() *time.Time
+	Equal() *time.Time
+	NotEqual() *time.Time
+}
+
+func TimeFilter(v IfPeriod) (bson.M, error) {
+	var period = &Period{
+		GT:       v.GT(),
+		GTE:      v.GTE(),
+		LT:       v.LT(),
+		LTE:      v.LTE(),
+		Equal:    v.Equal(),
+		NotEqual: v.NotEqual(),
+	}
+
+	return period.Filter()
+}
