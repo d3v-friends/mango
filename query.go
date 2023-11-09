@@ -7,7 +7,6 @@ import (
 	"github.com/d3v-friends/go-pure/fnPanic"
 	"github.com/d3v-friends/go-pure/fnParams"
 	"github.com/d3v-friends/go-pure/fnReflect"
-	"github.com/d3v-friends/mango/mFilter"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -173,9 +172,9 @@ func UpdateMany[MODEL any](
 	var updateFilter IfFilter
 	switch id := res.UpsertedID.(type) {
 	case primitive.ObjectID:
-		updateFilter = mFilter.NewId(i.ColNm(), id)
+		updateFilter = NewIdFilter(i.ColNm(), id)
 	case []primitive.ObjectID:
-		updateFilter = mFilter.NewIds(i.ColNm(), mFilter.OperatorIn, id...)
+		updateFilter = NewIdsFilter(i.ColNm(), OperatorIn, id...)
 	default:
 		ls = make([]*MODEL, 0)
 		return
