@@ -32,6 +32,64 @@ type (
 	}
 )
 
+func NewMDoc[DATA any](colNm string) *MDoc[DATA] {
+	return &MDoc[DATA]{
+		Id:      primitive.NewObjectID(),
+		Data:    new(DATA),
+		History: make([]*MDocHistory[DATA], 0),
+		colNm:   colNm,
+	}
+}
+
+func (x *MDoc[DATA]) Save(ctx context.Context, noUpdateTimes ...bool) (err error) {
+	if x.colNm == "" {
+		err = fmt.Errorf("not found col_nm in model: model=%s", fnLogger.ToJsonP(x))
+		return
+	}
+
+	var noUpdateTime = fnParams.Get(noUpdateTimes)
+	if !noUpdateTime {
+		var now = time.Now()
+		if x.origin == nil {
+			x.CreatedAt = now
+		}
+		x.UpdatedAt = now
+	}
+
+	// 새로 작성한 모델인 경우
+	if x.origin == nil {
+		if x.Id == primitive.NilObjectID {
+			x.Id = primitive.NewObjectID()
+		}
+
+		_, err = GetColP(ctx, x.colNm).InsertOne(ctx, x)
+		return
+	}
+
+	// 업데이트 모델
+	var updateRes *mongo.UpdateResult
+	if updateRes, err = GetColP(ctx, x.colNm).
+		UpdateOne(
+			ctx,
+			bson.M{
+				"_id": x.Id,
+			},
+			bson.M{
+				"$set": x,
+			},
+		); err != nil {
+		return
+	}
+
+	var id, isOk = updateRes.UpsertedID.(primitive.ObjectID)
+	if !isOk || id != x.Id {
+		err = fmt.Errorf("fail update model: model=%s", fnLogger.ToJsonP(x))
+		return
+	}
+
+	return
+}
+
 func (x *MDoc[DATA]) Update(ctx context.Context, v *DATA) (err error) {
 	if x.origin == nil {
 		err = fmt.Errorf(

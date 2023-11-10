@@ -32,6 +32,26 @@ func (x *Mango) Truncate(ctx context.Context) error {
 	return x.DB.Drop(ctx)
 }
 
+func (x *Mango) Insert(ctx context.Context, models ...IfColNm) (err error) {
+	switch len(models) {
+	case 0:
+		return
+	case 1:
+		var model = models[0]
+		_, err = GetColP(ctx, model.ColNm()).InsertOne(ctx, model)
+		return
+	default:
+		var model = models[0]
+		var ls = make([]interface{}, len(models))
+		for i, md := range models {
+			ls[i] = md
+		}
+
+		_, err = GetColP(ctx, model.ColNm()).InsertMany(ctx, ls)
+		return
+	}
+}
+
 /* ------------------------------------------------------------------------------------------------------------ */
 
 const ctxMango = "CTX_MANGO"

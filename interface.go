@@ -5,7 +5,7 @@ import "go.mongodb.org/mongo-driver/bson"
 type (
 	IfFilter interface {
 		Filter() (bson.M, error)
-		ColNm() string
+		IfColNm
 	}
 
 	IfPager interface {
@@ -15,5 +15,9 @@ type (
 
 	IfUpdate interface {
 		Update() (bson.M, error)
+	}
+
+	IfColNm interface {
+		ColNm() string
 	}
 )
