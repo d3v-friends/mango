@@ -32,15 +32,6 @@ type (
 	}
 )
 
-func NewMDoc[DATA any](colNm string) *MDoc[DATA] {
-	return &MDoc[DATA]{
-		Id:      primitive.NewObjectID(),
-		Data:    new(DATA),
-		History: make([]*MDocHistory[DATA], 0),
-		colNm:   colNm,
-	}
-}
-
 func (x *MDoc[DATA]) Save(ctx context.Context, noUpdateTimes ...bool) (err error) {
 	if x.colNm == "" {
 		err = fmt.Errorf("not found col_nm in model: model=%s", fnLogger.ToJsonP(x))
