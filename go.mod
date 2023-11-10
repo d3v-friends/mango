@@ -7,7 +7,7 @@ require (
 	github.com/d3v-friends/go-pure v0.0.37
 	github.com/shopspring/decimal v1.3.1
 	github.com/stretchr/testify v1.8.4
-	go.mongodb.org/mongo-driver v1.12.1
+	go.mongodb.org/mongo-driver v1.13.0
 )
 
 require (
