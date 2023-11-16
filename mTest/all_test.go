@@ -2,14 +2,18 @@ package mTest
 
 import (
 	"context"
+	"time"
+
 	"github.com/d3v-friends/go-pure/fnEnv"
 	"github.com/d3v-friends/go-pure/fnPanic"
 	"github.com/d3v-friends/go-pure/fnParams"
-	"github.com/d3v-friends/mango"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"time"
+
+	"github.com/d3v-friends/mango"
+	"github.com/d3v-friends/mango/mCodec"
+	"github.com/d3v-friends/mango/mMigrate"
 )
 
 type DocTest struct {
@@ -58,7 +62,7 @@ func NewMango(truncate ...bool) (res *mango.Mango) {
 			Username:    fnEnv.Read("MG_USERNAME"),
 			Password:    fnEnv.Read("MG_PASSWORD"),
 			Database:    fnEnv.Read("MG_DATABASE"),
-			SetRegistry: mcodec.RegisterDecimal,
+			SetRegistry: mCodec.RegisterDecimal,
 		},
 	))
 
