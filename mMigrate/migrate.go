@@ -41,6 +41,79 @@ func migrateDoc(
 	ctx context.Context,
 	db *mongo.Database,
 	model IfMigrateModel,
+) (err error) {
+	var sysCol = db.Collection(docMangoNm)
+
+	var count int64
+	if count, err = sysCol.CountDocuments(ctx, bson.M{
+		"colNm": model.GetColNm(),
+	}); err != nil {
+		return
+	}
+
+	var now = time.Now()
+	if count == 0 {
+		if _, err = sysCol.InsertOne(ctx, &DocMango{
+			Id:        primitive.NewObjectID(),
+			ColNm:     model.GetColNm(),
+			NextIdx:   0,
+			Histories: make([]*DocMangoHistory, 0),
+			CreatedAt: now,
+		}); err != nil {
+			return
+		}
+	}
+
+	var singleRes *mongo.SingleResult
+	if singleRes = sysCol.FindOne(ctx, bson.M{
+		"colNm": model.GetColNm(),
+	}); singleRes.Err() != nil {
+		err = singleRes.Err()
+		return
+	}
+
+	var colInfo = &DocMango{}
+	if err = singleRes.Decode(colInfo); err != nil {
+		return
+	}
+
+	var mgList = model.GetMigrateList()
+	var modelCol = db.Collection(model.GetColNm())
+	for i := colInfo.NextIdx; i < len(mgList); i++ {
+		var fn = mgList[i]
+		var memo string
+		if memo, err = fn(ctx, modelCol); err != nil {
+			return
+		}
+
+		if _, err = sysCol.UpdateOne(
+			ctx,
+			bson.M{
+				"colNm": model.GetColNm(),
+			},
+			bson.M{
+				"$set": bson.M{
+					"nextIdx":   i + 1,
+					"updatedAt": now,
+				},
+				"$push": bson.M{
+					"histories": bson.M{
+						"memo":      memo,
+						"createdAt": now,
+					},
+				},
+			}); err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func migrateDocByTx(
+	ctx context.Context,
+	db *mongo.Database,
+	model IfMigrateModel,
 ) error {
 	return mTx.Transact(ctx, db, func(tx *mTx.TxDB) (err error) {
 		var migColNm = model.GetColNm()
