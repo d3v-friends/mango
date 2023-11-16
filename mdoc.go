@@ -3,6 +3,8 @@ package mango
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/d3v-friends/go-pure/fnLogger"
 	"github.com/d3v-friends/go-pure/fnParams"
 	"github.com/d3v-friends/go-pure/fnReflect"
@@ -10,7 +12,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"time"
 )
 
 type (
@@ -214,5 +215,20 @@ func ReadListM[DATA any](
 		return
 	}
 
+	return
+}
+
+
+func NewDoc[DATA any](colNm string, v *DATA) (res *MDoc[DATA]) {
+	var now = time.Now()
+	res = &MDoc[DATA]{
+		Id:        primitive.NewObjectID(),
+		Data:      v,
+		History:   make([]*MDocHistory[DATA], 0),
+		CreatedAt: now,
+		UpdatedAt: now,
+		origin:    nil,
+		colNm:     colNm,
+	}
 	return
 }
