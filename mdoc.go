@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"time"
-
 	"github.com/d3v-friends/go-pure/fnLogger"
 	"github.com/d3v-friends/go-pure/fnParams"
 	"github.com/d3v-friends/go-pure/fnReflect"
@@ -17,6 +16,7 @@ import (
 type (
 	MDoc[DATA any] struct {
 		Id        primitive.ObjectID   `bson:"_id"`
+		TxId      *primitive.ObjectID  `bson:"txId"`
 		Data      *DATA                `bson:"data"`
 		History   []*MDocHistory[DATA] `bson:"history"`
 		CreatedAt time.Time            `bson:"createdAt"`
@@ -123,6 +123,13 @@ func (x *MDoc[DATA]) Update(ctx context.Context, v *DATA) (err error) {
 	return
 }
 
+func UpdateValue[DATA any](origin DATA, update *DATA) DATA {
+	if update != nil {
+		return *update
+	}
+	return origin
+}
+
 /* ------------------------------------------------------------------------------------------------------------ */
 
 func ReadOneM[DATA any](
@@ -218,6 +225,38 @@ func ReadListM[DATA any](
 	return
 }
 
+func UpdateDoc[DATA any](
+	ctx context.Context,
+	i IfFilter,
+	u *DATA,
+	opts ...*options.UpdateOptions,
+) (doc *MDoc[DATA], err error) {
+	var filter bson.M
+	if filter, err = i.Filter(); err != nil {
+		return
+	}
+
+	var col = GetColP(ctx, i.ColNm())
+	var now = time.Now()
+	if _, err = col.UpdateOne(
+		ctx,
+		filter,
+		bson.M{
+			"$set": bson.M{
+				"data":      *u,
+				"updatedAt": now,
+			},
+			"$push": bson.M{
+				"history": *u,
+			},
+		},
+		fnParams.Get(opts),
+	); err != nil {
+		return
+	}
+
+	return ReadOneM[DATA](ctx, i)
+}
 
 func NewDoc[DATA any](colNm string, v *DATA) (res *MDoc[DATA]) {
 	var now = time.Now()

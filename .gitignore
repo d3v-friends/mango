@@ -1,3 +1,5 @@
 /.idea/
+/.fleet/
+/.vs/
 /.vscode/
 /env/.env

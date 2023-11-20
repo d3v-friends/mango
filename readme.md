@@ -16,10 +16,10 @@
 | int        | int64                |
 | time       | time.Time            |
 
-
 # Mango Doc
+
 * Data 만 정의해서 관리되는 document format
-* Update 시 자동으로 백업하여 히스토리화 한다
+* Update시 자동으로 백업하여 히스토리화 한다
 
 # History
 

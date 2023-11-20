@@ -50,7 +50,7 @@ type (
 	}
 )
 
-const FieldInTxNm = "inTx"
+const FieldInTxNm = "txId"
 
 func NewTxDB(
 	ctx context.Context,
@@ -232,7 +232,7 @@ func (x *TxDB) UpdateOne(
 	}
 
 	var raw bson.Raw
-	if raw, err = cur.DecodeBytes(); err != nil {
+	if raw, err = cur.Raw(); err != nil {
 		return
 	}
 
@@ -419,7 +419,7 @@ func (x *TxDB) FindOneAndLock(
 	}
 
 	var raw bson.Raw
-	if raw, err = res.DecodeBytes(); err != nil {
+	if raw, err = res.Raw(); err != nil {
 		return
 	}
 
