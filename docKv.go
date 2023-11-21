@@ -72,7 +72,7 @@ var mgDocKv = mMigrate.FnMigrateList{
 
 /* ------------------------------------------------------------------------------------------------------------ */
 
-func SetKv[DATA any](ctx context.Context, key string, value *DATA) (doc *DocKv[DATA], err error) {
+func SetKv[DATA any](ctx context.Context, key string, value *DATA) (doc *DATA, err error) {
 	var byteValue []byte
 	if byteValue, err = json.Marshal(value); err != nil {
 		return
@@ -103,7 +103,7 @@ func SetKv[DATA any](ctx context.Context, key string, value *DATA) (doc *DocKv[D
 	return GetKv[DATA](ctx, key)
 }
 
-func GetKv[DATA any](ctx context.Context, key string) (res *DocKv[DATA], err error) {
+func GetKv[DATA any](ctx context.Context, key string) (res *DATA, err error) {
 	var col = GetColP(ctx, nmDocKv)
 
 	var singleRes *mongo.SingleResult
@@ -117,10 +117,10 @@ func GetKv[DATA any](ctx context.Context, key string) (res *DocKv[DATA], err err
 		return
 	}
 
-	res = new(DocKv[DATA])
-	if err = singleRes.Decode(res); err != nil {
+	var doc = new(DocKv[DATA])
+	if err = singleRes.Decode(doc); err != nil {
 		return
 	}
 
-	return
+	return doc.Parse()
 }
