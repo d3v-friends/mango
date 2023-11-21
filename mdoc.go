@@ -3,7 +3,6 @@ package mango
 import (
 	"context"
 	"fmt"
-	"time"
 	"github.com/d3v-friends/go-pure/fnLogger"
 	"github.com/d3v-friends/go-pure/fnParams"
 	"github.com/d3v-friends/go-pure/fnReflect"
@@ -11,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"time"
 )
 
 type (
@@ -48,19 +48,17 @@ func (x *MDoc[DATA]) Save(ctx context.Context, noUpdateTimes ...bool) (err error
 		x.UpdatedAt = now
 	}
 
+	var col = GetColP(ctx, x.colNm)
+
 	// 새로 작성한 모델인 경우
 	if x.origin == nil {
-		if x.Id == primitive.NilObjectID {
-			x.Id = primitive.NewObjectID()
-		}
-
-		_, err = GetColP(ctx, x.colNm).InsertOne(ctx, x)
+		_, err = col.InsertOne(ctx, x)
 		return
 	}
 
 	// 업데이트 모델
 	var updateRes *mongo.UpdateResult
-	if updateRes, err = GetColP(ctx, x.colNm).
+	if updateRes, err = col.
 		UpdateOne(
 			ctx,
 			bson.M{
