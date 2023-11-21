@@ -80,8 +80,7 @@ func SetKv[DATA any](ctx context.Context, key string, value *DATA) (doc *DATA, e
 
 	var now = time.Now()
 	var col = GetColP(ctx, nmDocKv)
-	var cur *mongo.SingleResult
-	if cur = col.FindOneAndUpdate(
+	if _, err = col.UpdateOne(
 		ctx,
 		bson.M{
 			"key": key,
@@ -92,11 +91,10 @@ func SetKv[DATA any](ctx context.Context, key string, value *DATA) (doc *DATA, e
 				"updatedAt": now,
 			},
 		},
-		&options.FindOneAndUpdateOptions{
+		&options.UpdateOptions{
 			Upsert: fnReflect.ToPointer(true),
 		},
-	); cur.Err() != nil {
-		err = cur.Err()
+	); err != nil {
 		return
 	}
 
