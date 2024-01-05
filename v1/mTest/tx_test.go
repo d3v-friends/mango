@@ -84,7 +84,7 @@ func TestTx(test *testing.T) {
 			); err != nil {
 			t.Fatal(err)
 		}
-		
+
 		assert.Equal(t, int64(0), has)
 	})
 

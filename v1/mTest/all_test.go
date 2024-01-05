@@ -2,6 +2,7 @@ package mTest
 
 import (
 	"context"
+	"github.com/d3v-friends/mango/fnMango"
 	"time"
 
 	"github.com/d3v-friends/go-pure/fnEnv"
@@ -57,7 +58,7 @@ var mgDocTest = mMigrate.FnMigrateList{
 func NewMango(truncate ...bool) (res *mango.Mango) {
 	fnPanic.On(fnEnv.ReadFromFile("../env/.env"))
 	res = fnPanic.Get(mango.NewMango(
-		&mango.IConn{
+		&fnMango.ConnectArgs{
 			Host:        fnEnv.Read("MG_HOST"),
 			Username:    fnEnv.Read("MG_USERNAME"),
 			Password:    fnEnv.Read("MG_PASSWORD"),

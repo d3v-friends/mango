@@ -1,4 +1,4 @@
-package mango
+package v1
 
 import "go.mongodb.org/mongo-driver/bson"
 

@@ -1,4 +1,4 @@
-package mango
+package v1
 
 import (
 	"encoding/json"

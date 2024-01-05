@@ -1,4 +1,4 @@
-package mango
+package v1
 
 import (
 	"github.com/d3v-friends/go-pure/fnReflect"
