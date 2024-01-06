@@ -1,4 +1,4 @@
-package fnDoc
+package stDoc
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/d3v-friends/go-pure/fnReflect"
 	"github.com/d3v-friends/mango/fnMango"
-	"github.com/d3v-friends/mango/fnMigrate"
+	"github.com/d3v-friends/mango/typ"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -14,20 +14,19 @@ import (
 	"time"
 )
 
-type DocKv struct {
+type Kv struct {
 	Id        primitive.ObjectID `bson:"_id"`
 	Key       string             `bson:"key"`
 	Value     []byte             `bson:"value"`
-	CreatedAt time.Time          `bson:"createdAt"`
 	UpdatedAt time.Time          `bson:"updatedAt"`
 }
 
-func (x *DocKv) GetColNm() string {
+func (x *Kv) GetColNm() string {
 	return "kvs"
 }
 
-func (x *DocKv) GetMigrate() []fnMigrate.Run {
-	return []fnMigrate.Run{
+func (x *Kv) GetMigrate() []typ.FnMigrate {
+	return []typ.FnMigrate{
 		func(ctx context.Context, col *mongo.Collection) (memo string, err error) {
 			memo = "init indexing"
 			_, err = col.Indexes().CreateMany(ctx, []mongo.IndexModel{
@@ -50,7 +49,7 @@ func (x *DocKv) GetMigrate() []fnMigrate.Run {
 
 func GetKv[T any](ctx context.Context, key string, defs ...*T) (res *T, err error) {
 	var now = time.Now()
-	var doc = new(DocKv)
+	var doc = new(Kv)
 	var col = fnMango.GetDbP(ctx, key).Collection(doc.GetColNm())
 	var total int64
 	if total, err = col.CountDocuments(
@@ -72,11 +71,10 @@ func GetKv[T any](ctx context.Context, key string, defs ...*T) (res *T, err erro
 			return
 		}
 
-		if _, err = col.InsertOne(ctx, &DocKv{
+		if _, err = col.InsertOne(ctx, &Kv{
 			Id:        primitive.NewObjectID(),
 			Key:       key,
 			Value:     value,
-			CreatedAt: now,
 			UpdatedAt: now,
 		}); err != nil {
 			return
@@ -110,7 +108,7 @@ func GetKv[T any](ctx context.Context, key string, defs ...*T) (res *T, err erro
 }
 
 func SetKv[T any](ctx context.Context, key string, value *T) (err error) {
-	var doc = new(DocKv)
+	var doc = new(Kv)
 	var now = time.Now()
 	var byteValue []byte
 	if byteValue, err = json.Marshal(value); err != nil {
@@ -124,7 +122,6 @@ func SetKv[T any](ctx context.Context, key string, value *T) (err error) {
 		bson.M{
 			"$set": bson.M{
 				"value":     byteValue,
-				"createdAt": now,
 				"updatedAt": now,
 			},
 		},

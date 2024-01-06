@@ -1,11 +1,11 @@
-package fnMigrate
+package fnMango
 
 import (
 	"context"
 	"github.com/d3v-friends/go-pure/fnEnv"
 	"github.com/d3v-friends/go-pure/fnPanic"
 	"github.com/d3v-friends/go-pure/fnReflect"
-	"github.com/d3v-friends/mango/fnMango"
+	"github.com/d3v-friends/mango/typ"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -16,20 +16,20 @@ import (
 
 func TestMigrate(test *testing.T) {
 	fnPanic.On(fnEnv.ReadFromFile("../env/.env"))
-	var client = fnPanic.OnValue(fnMango.Connect(&fnMango.ConnectArgs{
+	var client = fnPanic.OnValue(Connect(&ConnectArgs{
 		Host:     fnEnv.Read("MG_HOST"),
 		Username: fnEnv.Read("MG_USERNAME"),
 		Password: fnEnv.Read("MG_PASSWORD"),
-		SetRegistry: []fnMango.FnSetRegistry{
-			fnMango.DecimalRegistry,
+		SetRegistry: []FnSetRegistry{
+			DecimalRegistry,
 		},
 	}))
 
 	test.Run("migrate", func(t *testing.T) {
 		var ctx = context.TODO()
-		ctx = fnMango.SetDb(ctx, client.Database(fnEnv.Read("MG_DATABASE")))
+		ctx = SetDb(ctx, client.Database(fnEnv.Read("MG_DATABASE")))
 		var err = Migrate(ctx, &MigrateArgs{
-			Models: []Model{
+			Models: []typ.Model{
 				&DocTest{},
 			},
 		})
@@ -51,8 +51,8 @@ func (x *DocTest) GetColNm() string {
 	return "tests"
 }
 
-func (x *DocTest) GetMigrate() []Run {
-	return []Run{
+func (x *DocTest) GetMigrate() []typ.FnMigrate {
+	return []typ.FnMigrate{
 		func(ctx context.Context, col *mongo.Collection) (memo string, err error) {
 			memo = "init indexing"
 			_, err = col.Indexes().CreateMany(ctx, []mongo.IndexModel{

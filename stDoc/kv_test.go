@@ -1,4 +1,4 @@
-package fnDoc
+package stDoc
 
 import "testing"
 
