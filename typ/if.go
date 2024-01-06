@@ -19,4 +19,8 @@ type (
 	Sorter interface {
 		GetSort() (filter any, err error)
 	}
+
+	Query interface {
+		GetQuery() (res any, err error)
+	}
 )
