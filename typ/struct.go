@@ -5,6 +5,6 @@ type (
 		Page  int64
 		Size  int64
 		Total int64
-		List  []T
+		List  []*T
 	}
 )

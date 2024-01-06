@@ -6,16 +6,17 @@ type (
 		GetMigrate() []FnMigrate
 	}
 
-	PageArgs interface {
+	Pager interface {
 		GetSize() int64
 		GetPage() int64
 	}
 
 	Filter interface {
-		Filter() (filter any, err error)
+		GetFilter() (filter any, err error)
+		GetColNm() string
 	}
 
-	Sort interface {
-		Sort() (filter any, err error)
+	Sorter interface {
+		GetSort() (filter any, err error)
 	}
 )
