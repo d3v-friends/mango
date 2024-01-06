@@ -14,43 +14,63 @@ import (
 type (
 	Model interface {
 		GetColNm() string
-		GetMigrate() []FnMigrate
+		GetMigrate() []Run
 	}
 
-	FnMigrate func(ctx context.Context, col *mongo.Collection) (memo string, err error)
-)
+	MigrateArgs struct {
+		Models []Model
+	}
 
-const defMngColNm = "mango"
+	Run func(ctx context.Context, col *mongo.Collection) (memo string, err error)
+)
 
 func Migrate(
 	ctx context.Context,
 	i *MigrateArgs,
 ) (err error) {
-	var ctxKeys = make([]string, 0)
-	if i.CtxKey != nil {
-		ctxKeys = append(ctxKeys, *i.CtxKey)
-	}
+	var modelList = make([]Model, 0)
+	modelList = append(modelList, &DocMango{})
+	modelList = append(modelList, i.Models...)
 
-	var models = make([]Model, len(i.Models)+1)
-	models[0] = &DocMango{
-		colNm: i.mngColNm(),
-	}
-	for idx := range i.Models {
-		models[idx+1] = i.Models[idx]
-	}
-
-	var db = fnMango.GetDbP(ctx, ctxKeys...)
-	var colMango = db.Collection(models[0].GetColNm())
-	for _, model := range models {
-		var cur *mongo.SingleResult
-		if cur = colMango.FindOne(ctx, bson.M{
+	var db = fnMango.GetDbP(ctx)
+	var colMango = db.Collection(modelList[0].GetColNm())
+	var now = time.Now()
+	for _, model := range modelList {
+		var count int64
+		if count, err = colMango.CountDocuments(ctx, bson.M{
 			"colNm": model.GetColNm(),
-		}); cur.Err() != nil {
+		}); err != nil {
+			return
+		}
+
+		if count == 0 {
+			if _, err = colMango.InsertOne(
+				ctx,
+				&DocMango{
+					Id:        primitive.NewObjectID(),
+					ColNm:     model.GetColNm(),
+					NextIdx:   0,
+					History:   make([]*DocMangoHistory, 0),
+					CreatedAt: now,
+					UpdatedAt: now,
+				},
+			); err != nil {
+				return
+			}
+		}
+
+		var cur *mongo.SingleResult
+		if cur = colMango.FindOne(
+			ctx,
+			bson.M{
+				"colNm": model.GetColNm(),
+			},
+		); cur.Err() != nil {
 			err = cur.Err()
 			return
 		}
 
-		var doc *DocMango
+		var doc = new(DocMango)
 		if err = cur.Decode(doc); err != nil {
 			return
 		}
@@ -97,8 +117,6 @@ type (
 		History   []*DocMangoHistory `bson:"history"`
 		CreatedAt time.Time          `bson:"createdAt"`
 		UpdatedAt time.Time          `bson:"updatedAt"`
-
-		colNm string
 	}
 
 	DocMangoHistory struct {
@@ -108,11 +126,11 @@ type (
 )
 
 func (x *DocMango) GetColNm() string {
-	return x.colNm
+	return "mango"
 }
 
-func (x *DocMango) GetMigrate() []FnMigrate {
-	return []FnMigrate{
+func (x *DocMango) GetMigrate() []Run {
+	return []Run{
 		func(ctx context.Context, col *mongo.Collection) (memo string, err error) {
 			memo = "init indexing"
 			_, err = col.Indexes().CreateMany(ctx, []mongo.IndexModel{
@@ -132,17 +150,4 @@ func (x *DocMango) GetMigrate() []FnMigrate {
 			return
 		},
 	}
-}
-
-type MigrateArgs struct {
-	Models   []Model
-	MngColNm *string
-	CtxKey   *string
-}
-
-func (x *MigrateArgs) mngColNm() string {
-	if x.MngColNm != nil {
-		return *x.MngColNm
-	}
-	return defMngColNm
 }

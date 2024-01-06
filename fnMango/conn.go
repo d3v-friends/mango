@@ -18,8 +18,7 @@ type ConnectArgs struct {
 	Host        string
 	Username    string
 	Password    string
-	Database    string
-	SetRegistry FnSetRegistry
+	SetRegistry []FnSetRegistry
 }
 
 func (x *ConnectArgs) options() (opt *options.ClientOptions) {
@@ -37,8 +36,10 @@ func (x *ConnectArgs) options() (opt *options.ClientOptions) {
 
 	opt.Registry = bson.DefaultRegistry
 
-	if x.SetRegistry != nil {
-		opt.Registry = x.SetRegistry(opt.Registry)
+	if len(x.SetRegistry) != 0 {
+		for _, registry := range x.SetRegistry {
+			opt.Registry = registry(opt.Registry)
+		}
 	}
 
 	return
