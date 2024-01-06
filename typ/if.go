@@ -3,11 +3,6 @@ package typ
 import "go.mongodb.org/mongo-driver/bson"
 
 type (
-	Model interface {
-		GetColNm() string
-		GetMigrate() []FnMigrate
-	}
-
 	Pager interface {
 		GetSize() int64
 		GetPage() int64

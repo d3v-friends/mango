@@ -7,4 +7,9 @@ type (
 		Total int64
 		List  []*T
 	}
+
+	MigrateModel struct {
+		ColNm   string
+		Migrate []FnMigrate
+	}
 )

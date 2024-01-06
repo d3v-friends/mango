@@ -21,36 +21,37 @@ type Kv struct {
 	UpdatedAt time.Time          `bson:"updatedAt"`
 }
 
-func (x *Kv) GetColNm() string {
-	return "kvs"
-}
+const ColNmKv = "kvs"
 
-func (x *Kv) GetMigrate() []typ.FnMigrate {
-	return []typ.FnMigrate{
-		func(ctx context.Context, col *mongo.Collection) (memo string, err error) {
-			memo = "init indexing"
-			_, err = col.Indexes().CreateMany(ctx, []mongo.IndexModel{
-				{
-					Keys: bson.D{
-						{
-							Key:   "key",
-							Value: 1,
-						},
-					},
-					Options: &options.IndexOptions{
-						Unique: fnReflect.ToPointer(true),
+var MigrateKv = []typ.FnMigrate{
+	func(ctx context.Context, col *mongo.Collection) (memo string, err error) {
+		memo = "init indexing"
+		_, err = col.Indexes().CreateMany(ctx, []mongo.IndexModel{
+			{
+				Keys: bson.D{
+					{
+						Key:   "key",
+						Value: 1,
 					},
 				},
-			})
-			return
-		},
-	}
+				Options: &options.IndexOptions{
+					Unique: fnReflect.ToPointer(true),
+				},
+			},
+		})
+		return
+	},
 }
 
-func GetKv[T any](ctx context.Context, key string, defs ...*T) (res *T, err error) {
+func GetKv[T any](
+	ctx context.Context,
+	colNm string,
+	key string,
+	defs ...*T,
+) (res *T, err error) {
 	var now = time.Now()
 	var doc = new(Kv)
-	var col = fnMango.GetDbP(ctx, key).Collection(doc.GetColNm())
+	var col = fnMango.GetDbP(ctx, key).Collection(colNm)
 	var total int64
 	if total, err = col.CountDocuments(
 		ctx,
@@ -107,14 +108,18 @@ func GetKv[T any](ctx context.Context, key string, defs ...*T) (res *T, err erro
 	return
 }
 
-func SetKv[T any](ctx context.Context, key string, value *T) (err error) {
-	var doc = new(Kv)
+func SetKv[T any](
+	ctx context.Context,
+	colNm string,
+	key string,
+	value *T,
+) (err error) {
 	var now = time.Now()
 	var byteValue []byte
 	if byteValue, err = json.Marshal(value); err != nil {
 		return
 	}
-	if _, err = fnMango.GetDbP(ctx).Collection(doc.GetColNm()).UpdateOne(
+	if _, err = fnMango.GetDbP(ctx).Collection(colNm).UpdateOne(
 		ctx,
 		bson.M{
 			"key": key,

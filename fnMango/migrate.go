@@ -11,24 +11,27 @@ import (
 )
 
 type MigrateArgs struct {
-	Models []typ.Model
+	Models []*typ.MigrateModel
 }
 
 func Migrate(
 	ctx context.Context,
 	i *MigrateArgs,
 ) (err error) {
-	var modelList = make([]typ.Model, 0)
-	modelList = append(modelList, &stDoc.Mango{})
+	var modelList = make([]*typ.MigrateModel, 0)
+	modelList = append(modelList, &typ.MigrateModel{
+		ColNm:   stDoc.ColNmMango,
+		Migrate: stDoc.MigrateMango,
+	})
 	modelList = append(modelList, i.Models...)
 
 	var db = GetDbP(ctx)
-	var colMango = db.Collection(modelList[0].GetColNm())
+	var colMango = db.Collection(modelList[0].ColNm)
 	var now = time.Now()
 	for _, model := range modelList {
 		var count int64
 		if count, err = colMango.CountDocuments(ctx, bson.M{
-			"colNm": model.GetColNm(),
+			"colNm": model.ColNm,
 		}); err != nil {
 			return
 		}
@@ -38,7 +41,7 @@ func Migrate(
 				ctx,
 				&stDoc.Mango{
 					Id:        primitive.NewObjectID(),
-					ColNm:     model.GetColNm(),
+					ColNm:     model.ColNm,
 					NextIdx:   0,
 					History:   make([]*stDoc.MangoHistory, 0),
 					CreatedAt: now,
@@ -53,7 +56,7 @@ func Migrate(
 		if cur = colMango.FindOne(
 			ctx,
 			bson.M{
-				"colNm": model.GetColNm(),
+				"colNm": model.ColNm,
 			},
 		); cur.Err() != nil {
 			err = cur.Err()
@@ -65,8 +68,8 @@ func Migrate(
 			return
 		}
 
-		var colModel = db.Collection(model.GetColNm())
-		var migrateList = model.GetMigrate()
+		var colModel = db.Collection(model.ColNm)
+		var migrateList = model.Migrate
 
 		for i := doc.NextIdx; i < len(migrateList); i++ {
 			var fn = migrateList[i]
@@ -78,7 +81,7 @@ func Migrate(
 			if _, err = colMango.UpdateOne(
 				ctx,
 				bson.M{
-					"colNm": model.GetColNm(),
+					"colNm": model.ColNm,
 				},
 				bson.M{
 					"$push": bson.M{

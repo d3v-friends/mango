@@ -5,6 +5,7 @@ import (
 	"github.com/d3v-friends/go-pure/fnEnv"
 	"github.com/d3v-friends/go-pure/fnPanic"
 	"github.com/d3v-friends/go-pure/fnReflect"
+	"github.com/d3v-friends/mango/stDoc"
 	"github.com/d3v-friends/mango/typ"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -29,8 +30,11 @@ func TestMigrate(test *testing.T) {
 		var ctx = context.TODO()
 		ctx = SetDb(ctx, client.Database(fnEnv.Read("MG_DATABASE")))
 		var err = Migrate(ctx, &MigrateArgs{
-			Models: []typ.Model{
-				&DocTest{},
+			Models: []*typ.MigrateModel{
+				{
+					ColNm:   stDoc.ColNmMango,
+					Migrate: stDoc.MigrateMango,
+				},
 			},
 		})
 
