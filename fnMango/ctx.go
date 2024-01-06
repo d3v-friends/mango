@@ -41,7 +41,7 @@ func SetClient(ctx context.Context, client *mongo.Client, ctxKeys ...string) con
 }
 
 func GetDb(ctx context.Context, ctxKeys ...string) (db *mongo.Database, err error) {
-	var key = defClientKey
+	var key = defDbKey
 	if 0 < len(ctxKeys) {
 		key = ctxKeys[0]
 	}
@@ -64,9 +64,26 @@ func GetDbP(ctx context.Context, ctxKeys ...string) (db *mongo.Database) {
 }
 
 func SetDb(ctx context.Context, db *mongo.Database, ctxKeys ...string) context.Context {
-	var key = defClientKey
+	var key = defDbKey
 	if 0 < len(ctxKeys) {
 		key = ctxKeys[0]
 	}
 	return context.WithValue(ctx, key, db)
+}
+
+func GetCol(ctx context.Context, colNm string) (col *mongo.Collection, err error) {
+	var db *mongo.Database
+	if db, err = GetDb(ctx); err != nil {
+		return
+	}
+	col = db.Collection(colNm)
+	return
+}
+
+func GetColP(ctx context.Context, colNm string) (col *mongo.Collection) {
+	var err error
+	if col, err = GetCol(ctx, colNm); err != nil {
+		panic(err)
+	}
+	return
 }
