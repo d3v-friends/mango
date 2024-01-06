@@ -10,6 +10,7 @@ import (
 
 func FindOne[T any](
 	ctx context.Context,
+	colNm string,
 	filter typ.Filter,
 	sorter ...typ.Sorter,
 ) (res *T, err error) {
@@ -21,13 +22,13 @@ func FindOne[T any](
 	var opt = &options.FindOneOptions{}
 	if len(sorter) != 0 {
 		var s any
-		if s, err = sorter[0].GetSort(); err != nil {
+		if s, err = sorter[0].GetSorter(); err != nil {
 			return
 		}
 		opt.Sort = s
 	}
 
-	var col = GetDbP(ctx).Collection(filter.GetColNm())
+	var col = GetDbP(ctx).Collection(colNm)
 	var cur *mongo.SingleResult
 	if cur = col.FindOne(ctx, f, opt); cur.Err() != nil {
 		err = cur.Err()
@@ -44,6 +45,7 @@ func FindOne[T any](
 
 func FindAll[T any](
 	ctx context.Context,
+	colNm string,
 	filter typ.Filter,
 	sorter ...typ.Sorter,
 ) (res []*T, err error) {
@@ -55,13 +57,13 @@ func FindAll[T any](
 	var opt = &options.FindOptions{}
 	if len(sorter) != 0 {
 		var s any
-		if s, err = sorter[0].GetSort(); err != nil {
+		if s, err = sorter[0].GetSorter(); err != nil {
 			return
 		}
 		opt.Sort = s
 	}
 
-	var col = GetDbP(ctx).Collection(filter.GetColNm())
+	var col = GetDbP(ctx).Collection(colNm)
 	var cur *mongo.Cursor
 	if cur, err = col.Find(ctx, f, opt); err != nil {
 		return
@@ -77,6 +79,7 @@ func FindAll[T any](
 
 func FindList[T any](
 	ctx context.Context,
+	colNm string,
 	filter typ.Filter,
 	pager typ.Pager,
 	sorter ...typ.Sorter,
@@ -86,7 +89,7 @@ func FindList[T any](
 		return
 	}
 
-	var col = GetDbP(ctx).Collection(filter.GetColNm())
+	var col = GetDbP(ctx).Collection(colNm)
 	var total int64
 	if total, err = col.CountDocuments(ctx, f); err != nil {
 		return
@@ -95,7 +98,7 @@ func FindList[T any](
 	var opt = &options.FindOptions{}
 	if len(sorter) != 0 {
 		var s any
-		if s, err = sorter[0].GetSort(); err != nil {
+		if s, err = sorter[0].GetSorter(); err != nil {
 			return
 		}
 		opt.Sort = s

@@ -1,5 +1,7 @@
 package typ
 
+import "go.mongodb.org/mongo-driver/bson"
+
 type (
 	Model interface {
 		GetColNm() string
@@ -12,15 +14,14 @@ type (
 	}
 
 	Filter interface {
-		GetFilter() (filter any, err error)
-		GetColNm() string
+		GetFilter() (filter bson.M, err error)
 	}
 
 	Sorter interface {
-		GetSort() (filter any, err error)
+		GetSorter() (filter bson.M, err error)
 	}
 
 	Query interface {
-		GetQuery() (res any, err error)
+		GetQuery() (res bson.M, err error)
 	}
 )
