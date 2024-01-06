@@ -1,4 +1,4 @@
-package mCodec
+package fnMango
 
 import (
 	"errors"
@@ -17,7 +17,7 @@ type (
 	}
 )
 
-func RegisterDecimal(registry *bsoncodec.Registry) *bsoncodec.Registry {
+func DecimalRegistry(registry *bsoncodec.Registry) *bsoncodec.Registry {
 	registry.RegisterTypeEncoder(DecimalCodecRegister())
 	registry.RegisterTypeDecoder(DecimalCodecRegister())
 	return registry

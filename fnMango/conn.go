@@ -1,4 +1,4 @@
-package mango
+package fnMango
 
 import (
 	"context"
@@ -12,41 +12,16 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 )
 
-func NewClient(i *IConn, iCtx ...context.Context) (res *mongo.Client, err error) {
-	if i == nil {
-		err = fmt.Errorf("IConn is empty value")
-		return
-	}
-
-	var ctx = context.TODO()
-	if len(iCtx) == 1 {
-		ctx = iCtx[0]
-	}
-
-	if res, err = mongo.Connect(ctx, i.options()); err != nil {
-		return
-	}
-
-	if err = res.Ping(ctx, readpref.Primary()); err != nil {
-		return
-	}
-
-	return
-}
-
-/* ------------------------------------------------------------------------------------------------------------ */
-
 type FnSetRegistry func(registry *bsoncodec.Registry) *bsoncodec.Registry
 
-type IConn struct {
+type ConnectArgs struct {
 	Host        string
 	Username    string
 	Password    string
-	Database    string
-	SetRegistry FnSetRegistry
+	SetRegistry []FnSetRegistry
 }
 
-func (x *IConn) options() (opt *options.ClientOptions) {
+func (x *ConnectArgs) options() (opt *options.ClientOptions) {
 	opt = options.Client().
 		ApplyURI(fmt.Sprintf("mongodb://%s", x.Host)).
 		SetReadConcern(readconcern.Majority()).
@@ -61,8 +36,32 @@ func (x *IConn) options() (opt *options.ClientOptions) {
 
 	opt.Registry = bson.DefaultRegistry
 
-	if x.SetRegistry != nil {
-		opt.Registry = x.SetRegistry(opt.Registry)
+	if len(x.SetRegistry) != 0 {
+		for _, registry := range x.SetRegistry {
+			opt.Registry = registry(opt.Registry)
+		}
+	}
+
+	return
+}
+
+func Connect(i *ConnectArgs, ctxs ...context.Context) (client *mongo.Client, err error) {
+	if i == nil {
+		err = fmt.Errorf("IConn is empty value")
+		return
+	}
+
+	var ctx = context.TODO()
+	if 0 < len(ctxs) {
+		ctx = ctxs[0]
+	}
+
+	if client, err = mongo.Connect(ctx, i.options()); err != nil {
+		return
+	}
+
+	if err = client.Ping(ctx, readpref.Primary()); err != nil {
+		return
 	}
 
 	return
