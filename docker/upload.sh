@@ -1,6 +1,4 @@
-TAG1="docker.stdlib.in/mango:5"
-
 docker build \
-  -t "$TAG1" \
-  -f ./mango5.dockerfile .
-docker push "$TAG1"
+  -t "docker.stdlib.in/mango:6" \
+  -f ./mango6.dockerfile .
+docker push "docker.stdlib.in/mango:6"
