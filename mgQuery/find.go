@@ -12,16 +12,21 @@ import (
 
 func FindOne[T Model](
 	ctx context.Context,
-	filter bson.M,
+	filter any,
 	opts ...*options.FindOneOptions,
 ) (res *T, err error) {
+	var f bson.M
+	if f, err = ParseFilter(filter); err != nil {
+		return
+	}
+
 	var col *mongo.Collection
 	if col, err = mgCtx.GetColByModel[T](ctx); err != nil {
 		return
 	}
 
 	var cur *mongo.SingleResult
-	if cur = col.FindOne(ctx, filter, opts...); cur.Err() != nil {
+	if cur = col.FindOne(ctx, f, opts...); cur.Err() != nil {
 		err = cur.Err()
 		return
 	}
@@ -36,10 +41,15 @@ func FindOne[T Model](
 
 func Find[T Model](
 	ctx context.Context,
-	filter bson.M,
+	filter any,
 	limit *int64,
 	opts ...*options.FindOptions,
 ) (res []*T, err error) {
+	var f bson.M
+	if f, err = ParseFilter(filter); err != nil {
+		return
+	}
+
 	var o = &options.FindOptions{}
 	if len(opts) == 1 {
 		o = opts[0]
@@ -53,7 +63,7 @@ func Find[T Model](
 	}
 
 	var cur *mongo.Cursor
-	if cur, err = col.Find(ctx, filter, o); err != nil {
+	if cur, err = col.Find(ctx, f, o); err != nil {
 		return
 	}
 
@@ -67,10 +77,15 @@ func Find[T Model](
 
 func FindOneAndUpdate[T Model](
 	ctx context.Context,
-	filter bson.M,
+	filter any,
 	updater bson.M,
 	opts ...*options.FindOneAndUpdateOptions,
 ) (res *T, err error) {
+	var f bson.M
+	if f, err = ParseFilter(filter); err != nil {
+		return
+	}
+
 	var opt = &options.FindOneAndUpdateOptions{}
 	if len(opts) == 1 {
 		opt = opts[0]
@@ -85,7 +100,7 @@ func FindOneAndUpdate[T Model](
 
 	var cur *mongo.SingleResult
 	if cur = col.
-		FindOneAndUpdate(ctx, filter, updater, opt); cur.Err() != nil {
+		FindOneAndUpdate(ctx, f, updater, opt); cur.Err() != nil {
 		err = cur.Err()
 		return
 	}
@@ -109,10 +124,15 @@ const ErrNotFoundPagerArgs = "not_found_pager_args"
 
 func FindList[T Model](
 	ctx context.Context,
-	filter bson.M,
+	filter any,
 	pager PagerArgs,
 	opts ...*options.FindOptions,
 ) (res *ModelList[T], err error) {
+	var f bson.M
+	if f, err = ParseFilter(filter); err != nil {
+		return
+	}
+
 	var col *mongo.Collection
 	if col, err = mgCtx.GetColByModel[T](ctx); err != nil {
 		return
@@ -139,7 +159,7 @@ func FindList[T Model](
 	o.Limit = fnPointer.Make(pager.GetSize())
 
 	var cur *mongo.Cursor
-	if cur, err = col.Find(ctx, filter, o); err != nil {
+	if cur, err = col.Find(ctx, f, o); err != nil {
 		return
 	}
 

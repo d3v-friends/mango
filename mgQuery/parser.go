@@ -25,7 +25,12 @@ import (
 // ArrayArgs
 
 func ParseFilter(v any) (bson.M, error) {
-	return parseFilterField(bson.M{}, "", v)
+	switch t := v.(type) {
+	case bson.M:
+		return t, nil
+	default:
+		return parseFilterField(bson.M{}, "", v)
+	}
 }
 
 func parseFilterField(filter bson.M, parent string, v any) (_ bson.M, err error) {
@@ -76,7 +81,12 @@ func parseFilterField(filter bson.M, parent string, v any) (_ bson.M, err error)
 /* ------------------------------------------------------------------------------------------------------------ */
 
 func ParseSorter(v any) (bson.D, error) {
-	return parseSorterField(bson.D{}, "", v)
+	switch t := v.(type) {
+	case bson.D:
+		return t, nil
+	default:
+		return parseSorterField(bson.D{}, "", v)
+	}
 }
 
 func parseSorterField(sorter bson.D, parent string, v any) (_ bson.D, err error) {
