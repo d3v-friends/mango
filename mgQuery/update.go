@@ -10,7 +10,7 @@ import (
 
 func UpdateOne[T Model](
 	ctx context.Context,
-	filter bson.M,
+	filter any,
 	updater bson.M,
 	opts ...*options.UpdateOptions,
 ) (err error) {
@@ -19,7 +19,12 @@ func UpdateOne[T Model](
 		return
 	}
 
-	if _, err = col.UpdateOne(ctx, filter, updater, opts...); err != nil {
+	var f bson.M
+	if f, err = ParseFilter(filter); err != nil {
+		return
+	}
+
+	if _, err = col.UpdateOne(ctx, f, updater, opts...); err != nil {
 		return
 	}
 
@@ -28,7 +33,7 @@ func UpdateOne[T Model](
 
 func UpdateMany[T Model](
 	ctx context.Context,
-	filter bson.M,
+	filter any,
 	updater bson.M,
 	opts ...*options.UpdateOptions,
 ) (err error) {
@@ -37,7 +42,12 @@ func UpdateMany[T Model](
 		return
 	}
 
-	if _, err = col.UpdateMany(ctx, filter, updater, opts...); err != nil {
+	var f bson.M
+	if f, err = ParseFilter(filter); err != nil {
+		return
+	}
+
+	if _, err = col.UpdateMany(ctx, f, updater, opts...); err != nil {
 		return
 	}
 

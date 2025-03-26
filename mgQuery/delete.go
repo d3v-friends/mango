@@ -10,14 +10,20 @@ import (
 
 func DeleteOne[T Model](
 	ctx context.Context,
-	filter bson.M,
+	filter any,
 	opts ...*options.DeleteOptions,
 ) (err error) {
 	var col *mongo.Collection
 	if col, err = mgCtx.GetColByModel[T](ctx); err != nil {
 		return
 	}
-	if _, err = col.DeleteOne(ctx, filter, opts...); err != nil {
+
+	var f bson.M
+	if f, err = ParseFilter(filter); err != nil {
+		return
+	}
+
+	if _, err = col.DeleteOne(ctx, f, opts...); err != nil {
 		return
 	}
 
@@ -26,7 +32,7 @@ func DeleteOne[T Model](
 
 func DeleteMany[T Model](
 	ctx context.Context,
-	filter bson.M,
+	filter any,
 	opts ...*options.DeleteOptions,
 ) (err error) {
 	var col *mongo.Collection
@@ -34,7 +40,12 @@ func DeleteMany[T Model](
 		return
 	}
 
-	if _, err = col.DeleteMany(ctx, filter, opts...); err != nil {
+	var f bson.M
+	if f, err = ParseFilter(filter); err != nil {
+		return
+	}
+
+	if _, err = col.DeleteMany(ctx, f, opts...); err != nil {
 		return
 	}
 
