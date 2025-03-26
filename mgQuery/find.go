@@ -13,10 +13,20 @@ import (
 func FindOne[T Model](
 	ctx context.Context,
 	filter any,
+	sorter any,
 	opts ...*options.FindOneOptions,
 ) (res *T, err error) {
 	var f bson.M
 	if f, err = ParseFilter(filter); err != nil {
+		return
+	}
+
+	var opt = &options.FindOneOptions{}
+	if len(opts) == 1 {
+		opt = opts[0]
+	}
+
+	if opt.Sort, err = ParseSorter(sorter); err != nil {
 		return
 	}
 
@@ -42,6 +52,7 @@ func FindOne[T Model](
 func Find[T Model](
 	ctx context.Context,
 	filter any,
+	sorter any,
 	limit *int64,
 	opts ...*options.FindOptions,
 ) (res []*T, err error) {
@@ -53,6 +64,10 @@ func Find[T Model](
 	var o = &options.FindOptions{}
 	if len(opts) == 1 {
 		o = opts[0]
+	}
+
+	if o.Sort, err = ParseSorter(sorter); err != nil {
+		return
 	}
 
 	o.Limit = limit
@@ -78,6 +93,7 @@ func Find[T Model](
 func FindOneAndUpdate[T Model](
 	ctx context.Context,
 	filter any,
+	sorter any,
 	updater bson.M,
 	opts ...*options.FindOneAndUpdateOptions,
 ) (res *T, err error) {
@@ -91,6 +107,10 @@ func FindOneAndUpdate[T Model](
 		opt = opts[0]
 	} else {
 		opt.ReturnDocument = fnPointer.Make(options.After)
+	}
+
+	if opt.Sort, err = ParseSorter(sorter); err != nil {
+		return
 	}
 
 	var col *mongo.Collection
@@ -125,6 +145,7 @@ const ErrNotFoundPagerArgs = "not_found_pager_args"
 func FindList[T Model](
 	ctx context.Context,
 	filter any,
+	sorter any,
 	pager PagerArgs,
 	opts ...*options.FindOptions,
 ) (res *ModelList[T], err error) {
@@ -146,6 +167,10 @@ func FindList[T Model](
 	var o = &options.FindOptions{}
 	if len(opts) == 1 {
 		o = opts[0]
+	}
+
+	if o.Sort, err = ParseSorter(sorter); err != nil {
+		return
 	}
 
 	if fnPointer.IsNil(pager) {
