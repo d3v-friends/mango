@@ -72,9 +72,9 @@ func GetColP(ctx context.Context, name any) *mongo.Collection {
 }
 
 func GetColByModel[T Model](ctx context.Context) (*mongo.Collection, error) {
-	return GetCol(ctx, (*new(T)).GetColNm())
+	return GetCol(ctx, new(T))
 }
 
 func GetColByModelP[T Model](ctx context.Context) *mongo.Collection {
-	return GetColP(ctx, (*new(T)).GetColNm())
+	return GetColP(ctx, new(T))
 }
