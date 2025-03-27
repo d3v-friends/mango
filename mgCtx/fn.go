@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/d3v-friends/go-tools/fnCtx"
 	"github.com/d3v-friends/go-tools/fnError"
+	"github.com/d3v-friends/mango"
 	"go.mongodb.org/mongo-driver/mongo"
 	"reflect"
 )
@@ -14,10 +15,6 @@ const ctxKeyMongoDB fnCtx.Key[*mongo.Database] = "CTX_MONGO_DATABASE"
 const (
 	ErrInvalidNameType = "invalid_name_type"
 )
-
-type Model interface {
-	GetColNm() string
-}
 
 func SetDB(ctx context.Context, db *mongo.Database) context.Context {
 	return fnCtx.Set(ctx, ctxKeyMongoDB, db)
@@ -54,7 +51,7 @@ func GetCol(ctx context.Context, name any) (col *mongo.Collection, err error) {
 	case fmt.Stringer:
 		col = db.Collection(t.String())
 		return
-	case Model:
+	case mango.Model:
 		col = db.Collection(t.GetColNm())
 		return
 	default:
@@ -69,12 +66,4 @@ func GetColP(ctx context.Context, name any) *mongo.Collection {
 		panic(err)
 	}
 	return col
-}
-
-func GetColByModel[T Model](ctx context.Context) (*mongo.Collection, error) {
-	return GetCol(ctx, new(T))
-}
-
-func GetColByModelP[T Model](ctx context.Context) *mongo.Collection {
-	return GetColP(ctx, new(T))
 }

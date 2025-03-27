@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/d3v-friends/go-tools/fnPointer"
 	"github.com/d3v-friends/go-tools/fnSlice"
+	"github.com/d3v-friends/mango"
 	"github.com/d3v-friends/mango/mgCtx"
 	"github.com/d3v-friends/mango/mgOp"
 	"go.mongodb.org/mongo-driver/bson"
@@ -29,7 +30,7 @@ type (
 	}
 
 	MigratedModel interface {
-		GetColNm() string
+		mango.Model
 		GetMigrates() Steps
 	}
 

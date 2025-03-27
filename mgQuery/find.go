@@ -4,13 +4,14 @@ import (
 	"context"
 	"github.com/d3v-friends/go-tools/fnError"
 	"github.com/d3v-friends/go-tools/fnPointer"
+	"github.com/d3v-friends/mango"
 	"github.com/d3v-friends/mango/mgCtx"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func FindOne[T Model](
+func FindOne[T mango.Model](
 	ctx context.Context,
 	filter any,
 	sorter any,
@@ -31,7 +32,7 @@ func FindOne[T Model](
 	}
 
 	var col *mongo.Collection
-	if col, err = mgCtx.GetColByModel[T](ctx); err != nil {
+	if col, err = mgCtx.GetCol(ctx, *new(T)); err != nil {
 		return
 	}
 
@@ -49,7 +50,7 @@ func FindOne[T Model](
 	return
 }
 
-func Find[T Model](
+func Find[T mango.Model](
 	ctx context.Context,
 	filter any,
 	sorter any,
@@ -73,7 +74,7 @@ func Find[T Model](
 	o.Limit = limit
 
 	var col *mongo.Collection
-	if col, err = mgCtx.GetColByModel[T](ctx); err != nil {
+	if col, err = mgCtx.GetCol(ctx, *new(T)); err != nil {
 		return
 	}
 
@@ -90,7 +91,7 @@ func Find[T Model](
 	return
 }
 
-func FindOneAndUpdate[T Model](
+func FindOneAndUpdate[T mango.Model](
 	ctx context.Context,
 	filter any,
 	sorter any,
@@ -114,7 +115,7 @@ func FindOneAndUpdate[T Model](
 	}
 
 	var col *mongo.Collection
-	if col, err = mgCtx.GetColByModel[T](ctx); err != nil {
+	if col, err = mgCtx.GetCol(ctx, *new(T)); err != nil {
 		return
 	}
 
@@ -142,7 +143,7 @@ type ModelList[T any] struct {
 
 const ErrNotFoundPagerArgs = "not_found_pager_args"
 
-func FindList[T Model](
+func FindList[T mango.Model](
 	ctx context.Context,
 	filter any,
 	sorter any,
@@ -155,7 +156,7 @@ func FindList[T Model](
 	}
 
 	var col *mongo.Collection
-	if col, err = mgCtx.GetColByModel[T](ctx); err != nil {
+	if col, err = mgCtx.GetCol(ctx, *new(T)); err != nil {
 		return
 	}
 

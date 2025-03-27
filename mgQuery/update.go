@@ -2,20 +2,21 @@ package mgQuery
 
 import (
 	"context"
+	"github.com/d3v-friends/mango"
 	"github.com/d3v-friends/mango/mgCtx"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func UpdateOne[T Model](
+func UpdateOne[T mango.Model](
 	ctx context.Context,
 	filter any,
 	updater bson.M,
 	opts ...*options.UpdateOptions,
 ) (err error) {
 	var col *mongo.Collection
-	if col, err = mgCtx.GetColByModel[T](ctx); err != nil {
+	if col, err = mgCtx.GetCol(ctx, *new(T)); err != nil {
 		return
 	}
 
@@ -31,14 +32,14 @@ func UpdateOne[T Model](
 	return
 }
 
-func UpdateMany[T Model](
+func UpdateMany[T mango.Model](
 	ctx context.Context,
 	filter any,
 	updater bson.M,
 	opts ...*options.UpdateOptions,
 ) (err error) {
 	var col *mongo.Collection
-	if col, err = mgCtx.GetColByModel[T](ctx); err != nil {
+	if col, err = mgCtx.GetCol(ctx, *new(T)); err != nil {
 		return
 	}
 

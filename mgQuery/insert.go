@@ -3,22 +3,22 @@ package mgQuery
 import (
 	"context"
 	"github.com/d3v-friends/go-tools/fnError"
+	"github.com/d3v-friends/mango"
 	"github.com/d3v-friends/mango/mgCtx"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 const (
-	ErrEmptyModels                    = "empty_models"
-	ErrModelsAreNotSameCollectionData = "models_are_not_same_collection_data"
+	ErrEmptyModels = "empty_models"
 )
 
-func InsertOne[T Model](
+func InsertOne[T mango.Model](
 	ctx context.Context,
 	model T,
 ) (err error) {
 	var col *mongo.Collection
 
-	if col, err = mgCtx.GetColByModel[T](ctx); err != nil {
+	if col, err = mgCtx.GetCol(ctx, *new(T)); err != nil {
 		return
 	}
 
@@ -29,7 +29,7 @@ func InsertOne[T Model](
 	return
 }
 
-func InsertMany[T Model](
+func InsertMany[T mango.Model](
 	ctx context.Context,
 	models []T,
 ) (err error) {
@@ -45,7 +45,7 @@ func InsertMany[T Model](
 	}
 
 	var col *mongo.Collection
-	if col, err = mgCtx.GetColByModel[T](ctx); err != nil {
+	if col, err = mgCtx.GetCol(ctx, *new(T)); err != nil {
 		return
 	}
 

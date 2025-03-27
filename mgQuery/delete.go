@@ -2,19 +2,20 @@ package mgQuery
 
 import (
 	"context"
+	"github.com/d3v-friends/mango"
 	"github.com/d3v-friends/mango/mgCtx"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func DeleteOne[T Model](
+func DeleteOne[T mango.Model](
 	ctx context.Context,
 	filter any,
 	opts ...*options.DeleteOptions,
 ) (err error) {
 	var col *mongo.Collection
-	if col, err = mgCtx.GetColByModel[T](ctx); err != nil {
+	if col, err = mgCtx.GetCol(ctx, *new(T)); err != nil {
 		return
 	}
 
@@ -30,13 +31,13 @@ func DeleteOne[T Model](
 	return
 }
 
-func DeleteMany[T Model](
+func DeleteMany[T mango.Model](
 	ctx context.Context,
 	filter any,
 	opts ...*options.DeleteOptions,
 ) (err error) {
 	var col *mongo.Collection
-	if col, err = mgCtx.GetColByModel[T](ctx); err != nil {
+	if col, err = mgCtx.GetCol(ctx, *new(T)); err != nil {
 		return
 	}
 

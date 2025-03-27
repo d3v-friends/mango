@@ -57,7 +57,12 @@ func NewIndexNumber(
 	ctx context.Context,
 	name string,
 ) (idx uint64, err error) {
-	var res = mgCtx.GetColP(ctx, &Model{}).FindOneAndUpdate(
+	var col *mongo.Collection
+	if col, err = mgCtx.GetCol(ctx, &Model{}); err != nil {
+		return
+	}
+
+	var res = col.FindOneAndUpdate(
 		ctx,
 		bson.M{
 			FieldName: name,

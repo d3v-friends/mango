@@ -3,9 +3,9 @@ package mdKv
 import (
 	"context"
 	"github.com/d3v-friends/go-tools/fnPointer"
+	"github.com/d3v-friends/mango/mgCtx"
 	"github.com/d3v-friends/mango/mgMigrate"
 	"github.com/d3v-friends/mango/mgOp"
-	"github.com/d3v-friends/mango/mgQuery"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -56,14 +56,27 @@ func (x Model) GetMigrates() mgMigrate.Steps {
 func Find(
 	ctx context.Context,
 	key string,
-) (*Model, error) {
-	return mgQuery.FindOne[Model](
-		ctx,
-		bson.M{
-			FieldKey: key,
-		},
-		nil,
-	)
+) (model *Model, err error) {
+	var col *mongo.Collection
+	if col, err = mgCtx.GetCol(ctx, &Model{}); err != nil {
+		return
+	}
+
+	var cur = col.FindOne(ctx, bson.M{
+		FieldKey: key,
+	})
+
+	if cur.Err() != nil {
+		err = cur.Err()
+		return
+	}
+
+	model = &Model{}
+	if err = cur.Decode(model); err != nil {
+		return
+	}
+
+	return
 }
 
 func Get(
@@ -81,13 +94,17 @@ func Set(
 	ctx context.Context,
 	key string,
 	value string,
-) error {
-	var _, err = mgQuery.FindOneAndUpdate[Model](
+) (err error) {
+	var col *mongo.Collection
+	if col, err = mgCtx.GetCol(ctx, &Model{}); err != nil {
+		return
+	}
+
+	var cur = col.FindOneAndUpdate(
 		ctx,
 		bson.M{
 			FieldKey: key,
 		},
-		nil,
 		bson.M{
 			mgOp.Set: bson.M{
 				FieldValue:     value,
@@ -98,5 +115,7 @@ func Set(
 			Upsert: fnPointer.Make(true),
 		},
 	)
-	return err
+
+	err = cur.Err()
+	return
 }
