@@ -1,5 +1,5 @@
-github.com/d3v-friends/go-tools v1.0.0 h1:8ISYJyY+NfKY7907QgCvczf9LRlmyi+DJC6niTNlkoE=
-github.com/d3v-friends/go-tools v1.0.0/go.mod h1:bN84L4K7RhSt/IvVo7ShDgqOC/8GMOTotmIfM4BFPS4=
+github.com/d3v-friends/go-tools v1.0.2 h1:UF+eQ1HVE+wkW8HqLl9fErvNWnIQYv8e5Dre3i5+54M=
+github.com/d3v-friends/go-tools v1.0.2/go.mod h1:bN84L4K7RhSt/IvVo7ShDgqOC/8GMOTotmIfM4BFPS4=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/golang/snappy v1.0.0 h1:Oy607GVXHs7RtbggtPBnr2RmDArIsAefDwvrdWvRhGs=
