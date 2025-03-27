@@ -62,6 +62,7 @@ func Find(
 		bson.M{
 			FieldKey: key,
 		},
+		nil,
 	)
 }
 
@@ -86,6 +87,7 @@ func Set(
 		bson.M{
 			FieldKey: key,
 		},
+		nil,
 		bson.M{
 			mgOp.Set: bson.M{
 				FieldValue:     value,

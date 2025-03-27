@@ -28,7 +28,7 @@ const (
 	FieldUpdatedAt = "updatedAt"
 )
 
-var migrates = []mgMigrate.Step{
+var migrates = mgMigrate.Steps{
 	func(ctx context.Context, col *mongo.Collection) (memo string, err error) {
 		memo = "init indexing"
 		_, err = col.Indexes().CreateMany(ctx, []mongo.IndexModel{
@@ -49,7 +49,7 @@ func (x Model) GetColNm() string {
 	return ColNm
 }
 
-func (x Model) GetMigrates() []mgMigrate.Step {
+func (x Model) GetMigrates() mgMigrate.Steps {
 	return migrates
 }
 
