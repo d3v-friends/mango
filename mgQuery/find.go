@@ -106,8 +106,6 @@ func FindOneAndUpdate[T mango.Model](
 	var opt = &options.FindOneAndUpdateOptions{}
 	if len(opts) == 1 {
 		opt = opts[0]
-	} else {
-		opt.ReturnDocument = fnPointer.Make(options.After)
 	}
 
 	if opt.Sort, err = ParseSorter(sorter); err != nil {
