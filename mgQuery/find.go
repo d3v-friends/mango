@@ -161,7 +161,7 @@ func FindList[T mango.Model](
 	}
 
 	var total int64
-	if total, err = col.CountDocuments(ctx, filter); err != nil {
+	if total, err = col.CountDocuments(ctx, f); err != nil {
 		return
 	}
 
