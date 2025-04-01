@@ -140,12 +140,12 @@ type AppendFilterArgs interface {
 
 // CompareArgs 존재하는 모든 조건이 적용된다. (and 연산)
 type CompareArgs[T any] interface {
-	GetGt() T
-	GetGte() T
-	GetLt() T
-	GetLte() T
-	GetEqual() T
-	GetNotEqual() T
+	GetGt() *T
+	GetGte() *T
+	GetLt() *T
+	GetLte() *T
+	GetEqual() *T
+	GetNotEqual() *T
 }
 
 func AppendFilterCompareArgs[T any](
@@ -159,27 +159,27 @@ func AppendFilterCompareArgs[T any](
 
 	var compare = bson.M{}
 	if gt := args.GetGt(); !fnPointer.IsNil(gt) {
-		compare[mgOp.Gt] = gt
+		compare[mgOp.Gt] = *gt
 	}
 
 	if gte := args.GetGte(); !fnPointer.IsNil(gte) {
-		compare[mgOp.Gte] = gte
+		compare[mgOp.Gte] = *gte
 	}
 
 	if lt := args.GetLt(); !fnPointer.IsNil(lt) {
-		compare[mgOp.Lt] = lt
+		compare[mgOp.Lt] = *lt
 	}
 
 	if lte := args.GetLte(); !fnPointer.IsNil(lte) {
-		compare[mgOp.Lte] = lte
+		compare[mgOp.Lte] = *lte
 	}
 
 	if equal := args.GetEqual(); !fnPointer.IsNil(equal) {
-		compare[mgOp.Eq] = equal
+		compare[mgOp.Eq] = *equal
 	}
 
 	if notEqual := args.GetNotEqual(); !fnPointer.IsNil(notEqual) {
-		compare[mgOp.Ne] = notEqual
+		compare[mgOp.Ne] = *notEqual
 	}
 
 	if len(compare) == 0 {
@@ -265,7 +265,7 @@ func AppendSorter(
 // 순서대로 제일 먼저 있는 값을 적용한다.
 
 type ArrayArgs[T any] interface {
-	GetEqual() T
+	GetEqual() *T
 	GetIn() []T
 	GetHasAll() []T
 }
