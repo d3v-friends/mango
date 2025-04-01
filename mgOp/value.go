@@ -32,6 +32,7 @@ const (
 	Map          = "$map"
 	MergeObjects = "$mergeObjects"
 	Filter       = "$filter"
+	Skip         = "$skip"
 )
 
 // LookupSingle
