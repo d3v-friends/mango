@@ -3,29 +3,35 @@ package mgOp
 import "go.mongodb.org/mongo-driver/bson"
 
 const (
-	Match       = "$match"
-	Limit       = "$limit"
-	Lookup      = "$lookup"
-	ElemMatch   = "$elemMatch"
-	ArrayElemAt = "$arrayElemAt"
-	Push        = "$push"
-	Pull        = "$pull"
-	PullAll     = "$pullAll"
-	Set         = "$set"
-	Unset       = "$unset"
-	Inc         = "$inc"
-	First       = "$first"
-	Lt          = "$lt"
-	Lte         = "$lte"
-	Gt          = "$gt"
-	Gte         = "$gte"
-	Eq          = "$eq"
-	Ne          = "$ne"
-	In          = "$in"
-	Regex       = "$regex"
-	Exists      = "$exists"
-	Each        = "$each"
-	Or          = "$or"
+	Match        = "$match"
+	Limit        = "$limit"
+	Lookup       = "$lookup"
+	ElemMatch    = "$elemMatch"
+	ArrayElemAt  = "$arrayElemAt"
+	Push         = "$push"
+	Pull         = "$pull"
+	PullAll      = "$pullAll"
+	Set          = "$set"
+	Unset        = "$unset"
+	Inc          = "$inc"
+	First        = "$first"
+	Lt           = "$lt"
+	Lte          = "$lte"
+	Gt           = "$gt"
+	Gte          = "$gte"
+	Eq           = "$eq"
+	Ne           = "$ne"
+	In           = "$in"
+	Regex        = "$regex"
+	Exists       = "$exists"
+	Each         = "$each"
+	Or           = "$or"
+	Sort         = "$sort"
+	Project      = "$project"
+	AddFields    = "$addFields"
+	Map          = "$map"
+	MergeObjects = "$mergeObjects"
+	Filter       = "$filter"
 )
 
 // LookupSingle
@@ -56,4 +62,13 @@ type LookupConcise struct {
 	ForeignField string `bson:"foreignField"`
 	Let          bson.M `bson:"let,omitempty"`
 	Pipeline     bson.A `bson:"pipeline,omitempty"`
+}
+
+// FilterArgs
+// https://www.mongodb.com/docs/manual/reference/operator/aggregation/filter/
+type FilterArgs struct {
+	Input *string `bson:"input,omitempty"`
+	As    *string `bson:"as,omitempty"`
+	Cond  bson.M  `bson:"cond,omitempty"`
+	Limit *uint64 `bson:"limit,omitempty"`
 }
