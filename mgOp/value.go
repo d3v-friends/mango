@@ -65,10 +65,18 @@ type LookupConcise struct {
 }
 
 // FilterArgs
-// https://www.mongodb.com/docs/manual/reference/operator/aggregation/filter/
+// https://www.mongodb.com/docs/manual/reference/operator/aggregation/filter/#syntax
 type FilterArgs struct {
 	Input *string `bson:"input,omitempty"`
 	As    *string `bson:"as,omitempty"`
 	Cond  bson.M  `bson:"cond,omitempty"`
 	Limit *uint64 `bson:"limit,omitempty"`
+}
+
+// MapArgs
+// https://www.mongodb.com/docs/manual/reference/operator/aggregation/map/#syntax
+type MapArgs struct {
+	Input string  `bson:"input"`
+	As    *string `bson:"as,omitempty"`
+	In    bson.M  `bson:"in,omitempty"`
 }
