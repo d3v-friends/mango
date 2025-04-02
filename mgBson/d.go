@@ -23,16 +23,16 @@ func AppendSorter(
 	})
 }
 
-func AppendD(
+func AppendD[T any](
 	d bson.D,
 	key string,
-	value any,
+	value *T,
 ) bson.D {
 	if fnPointer.IsNil(value) {
 		return d
 	}
 	return append(d, bson.E{
 		Key:   key,
-		Value: value,
+		Value: *value,
 	})
 }

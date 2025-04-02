@@ -5,15 +5,14 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func AppendM(
+func AppendM[T any](
 	m bson.M,
 	key string,
-	value any,
+	value *T,
 ) bson.M {
 	if fnPointer.IsNil(value) {
 		return m
 	}
-
-	m[key] = value
+	m[key] = *value
 	return m
 }
