@@ -3,6 +3,7 @@ package mgCodec
 import (
 	"fmt"
 	"github.com/d3v-friends/go-tools/fnError"
+	"github.com/d3v-friends/go-tools/fnPointer"
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/bson/bsonrw"
 	"reflect"
@@ -112,7 +113,7 @@ const (
 func ParseEnum[T GrpcEnum[T]](
 	m map[string]int32,
 	str string,
-) (res T, err error) {
+) (res *T, err error) {
 	var i, has = m[str]
 	if !has {
 		err = fnError.NewFields(
@@ -124,6 +125,6 @@ func ParseEnum[T GrpcEnum[T]](
 		)
 		return
 	}
-	res = (*new(T)).New(i)
+	res = fnPointer.Make((*new(T)).New(i))
 	return
 }
