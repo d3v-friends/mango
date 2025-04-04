@@ -104,3 +104,26 @@ type GrpcEnum[T any] interface {
 	fmt.Stringer
 	New(int32) T
 }
+
+const (
+	ErrInvalidEnumValue = "invalid_enum_value"
+)
+
+func ParseEnum[T GrpcEnum[T]](
+	m map[string]int32,
+	str string,
+) (res T, err error) {
+	var i, has = m[str]
+	if !has {
+		err = fnError.NewFields(
+			ErrInvalidEnumValue,
+			map[string]any{
+				"type":  reflect.TypeOf(new(T)).Name(),
+				"value": str,
+			},
+		)
+		return
+	}
+	res = (*new(T)).New(i)
+	return
+}
