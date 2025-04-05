@@ -1,6 +1,6 @@
 module github.com/d3v-friends/mango
 
-go 1.24.1
+go 1.24.2
 
 require (
 	github.com/d3v-friends/go-tools v1.0.5
