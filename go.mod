@@ -1,9 +1,9 @@
 module github.com/d3v-friends/mango
 
-go 1.24.2
+go 1.23.8
 
 require (
-	github.com/d3v-friends/go-tools v1.0.5
+	github.com/d3v-friends/go-tools v1.0.6
 	go.mongodb.org/mongo-driver v1.17.3
 )
 
