@@ -40,21 +40,19 @@ func parseFilterField(filter bson.M, parent string, v any) (_ bson.M, err error)
 		parent = "_id"
 	}
 
+	if fnPointer.IsNil(v) {
+		return filter, nil
+	}
+
 	var vo = reflect.ValueOf(v)
 	var f, isOk = v.(AppendFilterArgs)
 	if isOk {
-		if vo.CanInterface() && !vo.IsNil() {
-			return f.AppendFilter(filter, parent), nil
-		}
-		return filter, nil
+		return f.AppendFilter(filter, parent), nil
 	}
 
 	switch vo.Kind() {
 	case reflect.Pointer:
-		if vo.CanInterface() && !vo.IsNil() {
-			return parseFilterField(filter, parent, vo.Elem().Interface())
-		}
-		return filter, nil
+		return parseFilterField(filter, parent, vo.Elem().Interface())
 	case reflect.Struct:
 		for i := 0; i < vo.NumField(); i++ {
 			var field = vo.Field(i)
@@ -94,21 +92,19 @@ func parseSorterField(sorter bson.D, parent string, v any) (_ bson.D, err error)
 		parent = "_id"
 	}
 
+	if fnPointer.IsNil(v) {
+		return sorter, nil
+	}
+
 	var vo = reflect.ValueOf(v)
 	var f, isOk = v.(SortArgs)
 	if isOk {
-		if vo.CanInterface() && !vo.IsNil() {
-			return AppendSorter(sorter, parent, f), nil
-		}
-		return sorter, nil
+		return AppendSorter(sorter, parent, f), nil
 	}
 
 	switch vo.Kind() {
 	case reflect.Pointer:
-		if vo.CanInterface() {
-			return parseSorterField(sorter, parent, vo.Elem().Interface())
-		}
-		return sorter, nil
+		return parseSorterField(sorter, parent, vo.Elem().Interface())
 	case reflect.Struct:
 		for i := 0; i < vo.NumField(); i++ {
 			var field = vo.Field(i)
