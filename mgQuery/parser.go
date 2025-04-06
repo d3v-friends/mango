@@ -40,11 +40,11 @@ func parseFilterField(filter bson.M, parent string, v any) (_ bson.M, err error)
 		parent = "_id"
 	}
 
-	if fnPointer.IsNil(v) {
+	var vo = reflect.ValueOf(v)
+	if vo.Kind() == reflect.Pointer && vo.IsNil() {
 		return filter, nil
 	}
 
-	var vo = reflect.ValueOf(v)
 	var f, isOk = v.(AppendFilterArgs)
 	if isOk {
 		return f.AppendFilter(filter, parent), nil
@@ -92,11 +92,11 @@ func parseSorterField(sorter bson.D, parent string, v any) (_ bson.D, err error)
 		parent = "_id"
 	}
 
-	if fnPointer.IsNil(v) {
+	var vo = reflect.ValueOf(v)
+	if vo.Kind() == reflect.Pointer && vo.IsNil() {
 		return sorter, nil
 	}
 
-	var vo = reflect.ValueOf(v)
 	var f, isOk = v.(SortArgs)
 	if isOk {
 		return AppendSorter(sorter, parent, f), nil
