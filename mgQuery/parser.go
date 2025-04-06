@@ -34,7 +34,7 @@ func ParseFilter(v any) (bson.M, error) {
 }
 
 func parseFilterField(filter bson.M, parent string, v any) (_ bson.M, err error) {
-	// gqlgen 에서 id 를 강제로 ID 로 표현 -> camelCase 로 하며 iD 로 구성되게 되어 에러가 남.
+	// gqlgen 에서 id 를 강제로 ID 로 표현 -> camelCase 로 하며 ID 로 구성되게 되어 에러가 남.
 	// mongodb 에서는 _id 강제로 사용
 	if strings.ToLower(parent) == "id" {
 		parent = "_id"
@@ -43,7 +43,7 @@ func parseFilterField(filter bson.M, parent string, v any) (_ bson.M, err error)
 	var vo = reflect.ValueOf(v)
 	var f, isOk = v.(AppendFilterArgs)
 	if isOk {
-		if vo.CanInterface() {
+		if vo.CanInterface() && !vo.IsNil() {
 			return f.AppendFilter(filter, parent), nil
 		}
 		return filter, nil
@@ -51,10 +51,10 @@ func parseFilterField(filter bson.M, parent string, v any) (_ bson.M, err error)
 
 	switch vo.Kind() {
 	case reflect.Pointer:
-		if vo.IsNil() {
-			return filter, nil
+		if vo.CanInterface() && !vo.IsNil() {
+			return parseFilterField(filter, parent, vo.Elem().Interface())
 		}
-		return parseFilterField(filter, parent, vo.Elem().Interface())
+		return filter, nil
 	case reflect.Struct:
 		for i := 0; i < vo.NumField(); i++ {
 			var field = vo.Field(i)
@@ -97,7 +97,7 @@ func parseSorterField(sorter bson.D, parent string, v any) (_ bson.D, err error)
 	var vo = reflect.ValueOf(v)
 	var f, isOk = v.(SortArgs)
 	if isOk {
-		if vo.CanInterface() {
+		if vo.CanInterface() && !vo.IsNil() {
 			return AppendSorter(sorter, parent, f), nil
 		}
 		return sorter, nil
@@ -105,10 +105,10 @@ func parseSorterField(sorter bson.D, parent string, v any) (_ bson.D, err error)
 
 	switch vo.Kind() {
 	case reflect.Pointer:
-		if vo.IsNil() {
-			return sorter, nil
+		if vo.CanInterface() {
+			return parseSorterField(sorter, parent, vo.Elem().Interface())
 		}
-		return parseSorterField(sorter, parent, vo.Elem().Interface())
+		return sorter, nil
 	case reflect.Struct:
 		for i := 0; i < vo.NumField(); i++ {
 			var field = vo.Field(i)
