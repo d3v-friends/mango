@@ -22,6 +22,7 @@ const (
 	Eq           = "$eq"
 	Ne           = "$ne"
 	In           = "$in"
+	Nin          = "$nin"
 	Regex        = "$regex"
 	Exists       = "$exists"
 	Each         = "$each"
