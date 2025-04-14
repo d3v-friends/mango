@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/d3v-friends/go-tools/fnLogger"
 	"go.mongodb.org/mongo-driver/event"
-	"strings"
 )
 
 func NewMonitor(loggers ...fnLogger.Logger) *event.CommandMonitor {
@@ -20,25 +19,19 @@ func NewMonitor(loggers ...fnLogger.Logger) *event.CommandMonitor {
 		Started: func(ctx context.Context, ev *event.CommandStartedEvent) {
 			logger.CtxInfo(
 				ctx,
-				map[string]any{
-					"command": strings.ReplaceAll(ev.Command.String(), "\n", ""),
-				},
+				ev.Command,
 			)
 		},
 		Succeeded: func(ctx context.Context, ev *event.CommandSucceededEvent) {
 			logger.CtxTrace(
 				ctx,
-				map[string]any{
-					"reply": strings.ReplaceAll(ev.Reply.String(), "\n", ""),
-				},
+				ev.Reply,
 			)
 		},
 		Failed: func(ctx context.Context, ev *event.CommandFailedEvent) {
 			logger.CtxError(
 				ctx,
-				map[string]any{
-					"failure": ev.Failure,
-				},
+				ev.Failure,
 			)
 		},
 	}

@@ -3,13 +3,13 @@ package mgConn
 import (
 	"context"
 	"fmt"
+	"github.com/d3v-friends/go-tools/fnPointer"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readconcern"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 )
 
@@ -24,13 +24,9 @@ type ConnectArgs struct {
 
 type CodecRegistry func(*bsoncodec.Registry) *bsoncodec.Registry
 
-func (x *ConnectArgs) host() string {
-	return fmt.Sprintf("mongodb://%s", x.Host)
-}
-
-func (x *ConnectArgs) opt() (opt *options.ClientOptions) {
+func (x *ConnectArgs) Opts() (opt *options.ClientOptions) {
 	opt = options.Client().
-		ApplyURI(x.host()).
+		ApplyURI(fmt.Sprintf("mongodb://%s", x.Host)).
 		SetReadConcern(readconcern.Majority()).
 		SetWriteConcern(writeconcern.Majority()).
 		SetAuth(options.Credential{
@@ -39,7 +35,8 @@ func (x *ConnectArgs) opt() (opt *options.ClientOptions) {
 		}).
 		SetBSONOptions(&options.BSONOptions{
 			UseLocalTimeZone: false,
-		})
+		}).
+		SetDirect(true)
 
 	if x.LogOption != nil {
 		opt.SetLoggerOptions(x.LogOption)
@@ -60,15 +57,30 @@ func (x *ConnectArgs) opt() (opt *options.ClientOptions) {
 	return
 }
 
+func AppendRegistry(
+	opt *options.ClientOptions,
+	registries ...CodecRegistry,
+) *options.ClientOptions {
+	if fnPointer.IsNil(opt.Registry) {
+		opt.Registry = bson.NewRegistry()
+	}
+
+	for _, registry := range registries {
+		opt.Registry = registry(opt.Registry)
+	}
+
+	return opt
+}
+
 func Connect(
 	ctx context.Context,
 	i *ConnectArgs,
 ) (client *mongo.Client, err error) {
-	if client, err = mongo.Connect(ctx, i.opt()); err != nil {
+	if client, err = mongo.Connect(ctx, i.Opts()); err != nil {
 		return
 	}
 
-	if err = client.Ping(ctx, readpref.Primary()); err != nil {
+	if err = client.Ping(ctx, nil); err != nil {
 		return
 	}
 
