@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"strings"
 	"time"
 )
 
@@ -117,5 +118,9 @@ func Set(
 	)
 
 	err = cur.Err()
+	if err != nil && strings.Contains(err.Error(), "mongo: no documents in result") {
+		err = nil
+	}
+
 	return
 }
