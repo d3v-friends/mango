@@ -10,23 +10,10 @@ import (
 	"reflect"
 )
 
-const ctxKeyMongoDB fnCtx.Key[*mongo.Database] = "CTX_MONGO_DATABASE"
-
 const (
-	ErrInvalidNameType = "invalid_name_type"
+	ctxKeyMongoDB      fnCtx.Key[*mongo.Database] = "CTX_MONGO_DATABASE"
+	ErrInvalidNameType                            = "invalid_name_type"
 )
-
-func SetDB(ctx context.Context, db *mongo.Database) context.Context {
-	return fnCtx.Set(ctx, ctxKeyMongoDB, db)
-}
-
-func GetDB(ctx context.Context) (*mongo.Database, error) {
-	return fnCtx.Get(ctx, ctxKeyMongoDB)
-}
-
-func GetDBP(ctx context.Context) *mongo.Database {
-	return fnCtx.GetP(ctx, ctxKeyMongoDB)
-}
 
 func GetCol(ctx context.Context, name any) (col *mongo.Collection, err error) {
 	var db *mongo.Database
