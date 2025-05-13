@@ -17,7 +17,7 @@ func FindOne[T mango.Model](
 	sorter any,
 	opts ...*options.FindOneOptions,
 ) (res *T, err error) {
-	var f bson.M
+	var f any
 	if f, err = ParseFilter(filter); err != nil {
 		return
 	}
@@ -57,7 +57,7 @@ func Find[T mango.Model](
 	limit *int64,
 	opts ...*options.FindOptions,
 ) (res []*T, err error) {
-	var f bson.M
+	var f any
 	if f, err = ParseFilter(filter); err != nil {
 		return
 	}
@@ -98,7 +98,7 @@ func FindOneAndUpdate[T mango.Model](
 	updater bson.M,
 	opts ...*options.FindOneAndUpdateOptions,
 ) (res *T, err error) {
-	var f bson.M
+	var f any
 	if f, err = ParseFilter(filter); err != nil {
 		return
 	}
@@ -148,7 +148,7 @@ func FindList[T mango.Model](
 	pager PagerArgs,
 	opts ...*options.FindOptions,
 ) (res *ModelList[T], err error) {
-	var f bson.M
+	var f any
 	if f, err = ParseFilter(filter); err != nil {
 		return
 	}

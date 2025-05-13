@@ -1,4 +1,5 @@
 #!/bin/zsh
+set -e
 
 BASE_TAG=$1
 TAG="v$BASE_TAG"

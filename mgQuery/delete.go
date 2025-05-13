@@ -20,7 +20,7 @@ func DeleteOne[T mango.Model](
 	}
 
 	var f bson.M
-	if f, err = ParseFilter(filter); err != nil {
+	if f, err = ParseFilterBsonM(filter); err != nil {
 		return
 	}
 
@@ -42,7 +42,7 @@ func DeleteMany[T mango.Model](
 	}
 
 	var f bson.M
-	if f, err = ParseFilter(filter); err != nil {
+	if f, err = ParseFilterBsonM(filter); err != nil {
 		return
 	}
 

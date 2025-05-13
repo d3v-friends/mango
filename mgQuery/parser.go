@@ -6,6 +6,7 @@ import (
 	"github.com/d3v-friends/go-tools/fnPointer"
 	"github.com/d3v-friends/mango/mgOp"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"reflect"
 	"strings"
 )
@@ -24,17 +25,29 @@ import (
 // CompareArgs
 // ArrayArgs
 
-func ParseFilter(v any) (bson.M, error) {
+type Raw interface {
+	Raw(registries ...*bsoncodec.Registry) (bson.Raw, error)
+}
+
+func ParseFilter(v any, registries ...*bsoncodec.Registry) (any, error) {
 	switch t := v.(type) {
-	case bson.M:
+	case bson.M, bson.A, bson.D, bson.E, bson.Raw:
 		return t, nil
+	case Raw:
+		return t.Raw(registries...)
 	default:
-		return parseFilterField(bson.M{}, "", v)
+		return parseFilterBsonM(bson.M{}, "", v)
 	}
 }
 
-func parseFilterField(filter bson.M, parent string, v any) (_ bson.M, err error) {
-	// gqlgen 에서 id 를 강제로 ID 로 표현 -> camelCase 로 하며 ID 로 구성되게 되어 에러가 남.
+func ParseFilterBsonM(v any) (bson.M, error) {
+	return parseFilterBsonM(bson.M{}, "", v)
+}
+
+func parseFilterBsonM(filter bson.M, parent string, v any) (_ bson.M, err error) {
+	// gqlgen ID 로 바뀌는 것 수정
+	parent = strings.ReplaceAll(parent, "ID", "Id")
+
 	// mongodb 에서는 _id 강제로 사용
 	if strings.ToLower(parent) == "id" {
 		parent = "_id"
@@ -52,7 +65,7 @@ func parseFilterField(filter bson.M, parent string, v any) (_ bson.M, err error)
 
 	switch vo.Kind() {
 	case reflect.Pointer:
-		return parseFilterField(filter, parent, vo.Elem().Interface())
+		return parseFilterBsonM(filter, parent, vo.Elem().Interface())
 	case reflect.Struct:
 		for i := 0; i < vo.NumField(); i++ {
 			var field = vo.Field(i)
@@ -65,7 +78,7 @@ func parseFilterField(filter bson.M, parent string, v any) (_ bson.M, err error)
 				key = fmt.Sprintf("%s.%s", parent, key)
 			}
 
-			if filter, err = parseFilterField(filter, key, field.Interface()); err != nil {
+			if filter, err = parseFilterBsonM(filter, key, field.Interface()); err != nil {
 				return nil, err
 			}
 		}
@@ -78,16 +91,25 @@ func parseFilterField(filter bson.M, parent string, v any) (_ bson.M, err error)
 
 /* ------------------------------------------------------------------------------------------------------------ */
 
-func ParseSorter(v any) (bson.D, error) {
+func ParseSorter(v any, registries ...*bsoncodec.Registry) (any, error) {
 	switch t := v.(type) {
-	case bson.D:
+	case bson.M, bson.A, bson.D, bson.E:
 		return t, nil
+	case Raw:
+		return t.Raw(registries...)
 	default:
-		return parseSorterField(bson.D{}, "", v)
+		return parseSorterBsonD(bson.D{}, "", v)
 	}
 }
 
-func parseSorterField(sorter bson.D, parent string, v any) (_ bson.D, err error) {
+func ParseSorterBsonD(v any) (bson.D, error) {
+	return parseSorterBsonD(bson.D{}, "", v)
+}
+
+func parseSorterBsonD(sorter bson.D, parent string, v any) (_ bson.D, err error) {
+	// gqlgen ID 로 바뀌는 것 수정
+	parent = strings.ReplaceAll(parent, "ID", "Id")
+
 	if strings.ToLower(parent) == "id" {
 		parent = "_id"
 	}
@@ -104,7 +126,7 @@ func parseSorterField(sorter bson.D, parent string, v any) (_ bson.D, err error)
 
 	switch vo.Kind() {
 	case reflect.Pointer:
-		return parseSorterField(sorter, parent, vo.Elem().Interface())
+		return parseSorterBsonD(sorter, parent, vo.Elem().Interface())
 	case reflect.Struct:
 		for i := 0; i < vo.NumField(); i++ {
 			var field = vo.Field(i)
@@ -117,7 +139,7 @@ func parseSorterField(sorter bson.D, parent string, v any) (_ bson.D, err error)
 				key = fmt.Sprintf("%s.%s", parent, key)
 			}
 
-			if sorter, err = parseSorterField(sorter, key, field.Interface()); err != nil {
+			if sorter, err = parseSorterBsonD(sorter, key, field.Interface()); err != nil {
 				return
 			}
 		}
