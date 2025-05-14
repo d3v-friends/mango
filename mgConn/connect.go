@@ -57,6 +57,14 @@ func (x *ConnectArgs) Opts() (opt *options.ClientOptions) {
 	return
 }
 
+func NewRegistry(codecs ...CodecRegistry) (registry *bsoncodec.Registry) {
+	registry = bson.NewRegistry()
+	for _, codecRegistry := range codecs {
+		registry = codecRegistry(registry)
+	}
+	return registry
+}
+
 func AppendRegistry(
 	opt *options.ClientOptions,
 	registries ...CodecRegistry,
