@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/d3v-friends/mango"
 	"github.com/d3v-friends/mango/mgCtx"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -19,8 +18,8 @@ func DeleteOne[T mango.Model](
 		return
 	}
 
-	var f bson.M
-	if f, err = ParseFilterBsonM(filter); err != nil {
+	var f any
+	if f, err = ParseFilter(filter); err != nil {
 		return
 	}
 
@@ -41,8 +40,8 @@ func DeleteMany[T mango.Model](
 		return
 	}
 
-	var f bson.M
-	if f, err = ParseFilterBsonM(filter); err != nil {
+	var f any
+	if f, err = ParseFilter(filter); err != nil {
 		return
 	}
 

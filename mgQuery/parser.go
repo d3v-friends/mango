@@ -94,6 +94,10 @@ func parseFilterBsonM(filter bson.M, parent string, v any) (_ bson.M, err error)
 /* ------------------------------------------------------------------------------------------------------------ */
 
 func ParseSorter(v any, registries ...*bsoncodec.Registry) (any, error) {
+	if fnPointer.IsNil(v) {
+		return bson.D{}, nil
+	}
+
 	switch t := v.(type) {
 	case bson.M, bson.A, bson.D, bson.E:
 		return t, nil

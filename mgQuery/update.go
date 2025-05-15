@@ -20,8 +20,8 @@ func UpdateOne[T mango.Model](
 		return
 	}
 
-	var f bson.M
-	if f, err = ParseFilterBsonM(filter); err != nil {
+	var f any
+	if f, err = ParseFilter(filter); err != nil {
 		return
 	}
 
@@ -43,8 +43,8 @@ func UpdateMany[T mango.Model](
 		return
 	}
 
-	var f bson.M
-	if f, err = ParseFilterBsonM(filter); err != nil {
+	var f any
+	if f, err = ParseFilter(filter); err != nil {
 		return
 	}
 
