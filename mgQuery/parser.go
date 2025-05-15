@@ -35,6 +35,8 @@ func ParseFilter(v any, registries ...*bsoncodec.Registry) (any, error) {
 		return t, nil
 	case Raw:
 		return t.Raw(registries...)
+	case nil:
+		return bson.M{}, nil
 	default:
 		return parseFilterBsonM(bson.M{}, "", v)
 	}
@@ -97,6 +99,8 @@ func ParseSorter(v any, registries ...*bsoncodec.Registry) (any, error) {
 		return t, nil
 	case Raw:
 		return t.Raw(registries...)
+	case nil:
+		return bson.D{}, nil
 	default:
 		return parseSorterBsonD(bson.D{}, "", v)
 	}
