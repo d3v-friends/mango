@@ -269,7 +269,7 @@ type PagerArgs interface {
 }
 
 type SortArgs interface {
-	GetDirection() int64
+	GetDirection() int32
 }
 
 func AppendSorter(
