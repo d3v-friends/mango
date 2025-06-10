@@ -25,7 +25,7 @@ func FindOne[T mango.Model](
 	}
 
 	var opt = &options.FindOneOptions{}
-	if len(opts) == 1 {
+	if len(opts) == 1 && !fnPointer.IsNil(opts[0]) {
 		opt = opts[0]
 	}
 
@@ -67,7 +67,7 @@ func Find[T mango.Model](
 	}
 
 	var o = &options.FindOptions{}
-	if len(opts) == 1 {
+	if len(opts) == 1 && !fnPointer.IsNil(opts[0]) {
 		o = opts[0]
 	}
 
@@ -110,7 +110,7 @@ func FindOneAndUpdate[T mango.Model](
 	}
 
 	var opt = &options.FindOneAndUpdateOptions{}
-	if len(opts) == 1 {
+	if len(opts) == 1 && !fnPointer.IsNil(opts[0]) {
 		opt = opts[0]
 	}
 
@@ -172,7 +172,7 @@ func FindList[T mango.Model](
 	}
 
 	var o = &options.FindOptions{}
-	if len(opts) == 1 {
+	if len(opts) == 1 && !fnPointer.IsNil(opts[0]) {
 		o = opts[0]
 	}
 

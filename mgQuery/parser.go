@@ -3,6 +3,7 @@ package mgQuery
 import (
 	"fmt"
 	"github.com/d3v-friends/go-tools/fnCase"
+	"github.com/d3v-friends/go-tools/fnError"
 	"github.com/d3v-friends/go-tools/fnPointer"
 	"github.com/d3v-friends/mango/mgOp"
 	"go.mongodb.org/mongo-driver/bson"
@@ -106,35 +107,66 @@ func ParseSorter(v any, registries ...*bsoncodec.Registry) (any, error) {
 	case nil:
 		return bson.D{}, nil
 	default:
-		return parseSorterBsonD(bson.D{}, "", v)
+		return ParseSorterBsonD(v)
 	}
 }
 
-func ParseSorterBsonD(v any) (bson.D, error) {
-	return parseSorterBsonD(bson.D{}, "", v)
+func ParseSorterBsonD(v any) (sorter bson.D, err error) {
+	sorter = bson.D{}
+	var vo = reflect.ValueOf(v)
+	switch vo.Kind() {
+	case reflect.Slice:
+		for i := 0; i < vo.Len(); i++ {
+			var field = vo.Index(i)
+			if !field.CanInterface() {
+				continue
+			}
+
+			var elem *bson.E
+			if elem, err = parserSorter("", field.Interface()); err != nil {
+				return
+			}
+			sorter = append(sorter, *elem)
+		}
+	default:
+		var elem *bson.E
+		if elem, err = parserSorter("", v); err != nil {
+			return
+		}
+		sorter = append(sorter, *elem)
+	}
+	return
 }
 
-func parseSorterBsonD(sorter bson.D, parent string, v any) (_ bson.D, err error) {
+const (
+	ErrSorterIsNil   = "sorter_is_nil"
+	ErrInvalidSorter = "invalid_sorter"
+)
+
+func parserSorter(parent string, v any) (res *bson.E, err error) {
 	// gqlgen ID 로 바뀌는 것 수정
 	parent = strings.ReplaceAll(parent, "ID", "Id")
-
-	if strings.ToLower(parent) == "id" {
+	if parent == "id" {
 		parent = "_id"
 	}
 
 	var vo = reflect.ValueOf(v)
 	if vo.Kind() == reflect.Pointer && vo.IsNil() {
-		return sorter, nil
+		err = fnError.NewF(ErrSorterIsNil)
+		return
 	}
 
 	var f, isOk = v.(SortArgs)
 	if isOk {
-		return AppendSorter(sorter, parent, f), nil
+		return &bson.E{
+			Key:   parent,
+			Value: f.GetDirection(),
+		}, nil
 	}
 
 	switch vo.Kind() {
 	case reflect.Pointer:
-		return parseSorterBsonD(sorter, parent, vo.Elem().Interface())
+		return parserSorter(parent, vo.Elem().Interface())
 	case reflect.Struct:
 		for i := 0; i < vo.NumField(); i++ {
 			var field = vo.Field(i)
@@ -147,15 +179,17 @@ func parseSorterBsonD(sorter bson.D, parent string, v any) (_ bson.D, err error)
 				key = fmt.Sprintf("%s.%s", parent, key)
 			}
 
-			if sorter, err = parseSorterBsonD(sorter, key, field.Interface()); err != nil {
-				return
+			if res, err = parserSorter(key, field.Interface()); err != nil {
+				err = nil
+				continue
 			}
+			return
 		}
-		return sorter, nil
+		fallthrough
 	default:
-		return sorter, nil
+		err = fnError.NewF(ErrInvalidSorter)
+		return
 	}
-
 }
 
 /*------------------------------------------------------------------------------------------------*/
