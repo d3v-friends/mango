@@ -146,7 +146,7 @@ const (
 func parserSorter(parent string, v any) (res *bson.E, err error) {
 	// gqlgen ID 로 바뀌는 것 수정
 	parent = strings.ReplaceAll(parent, "ID", "Id")
-	if parent == "id" {
+	if strings.ToLower(parent) == "id" {
 		parent = "_id"
 	}
 
