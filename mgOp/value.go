@@ -34,6 +34,8 @@ const (
 	MergeObjects = "$mergeObjects"
 	Filter       = "$filter"
 	Skip         = "$skip"
+	Group        = "$group"
+	Sum          = "$sum"
 )
 
 // LookupSingle
