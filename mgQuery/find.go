@@ -39,7 +39,7 @@ func FindOne[T mango.Model](
 	}
 
 	var cur *mongo.SingleResult
-	if cur = col.FindOne(ctx, f, opts...); cur.Err() != nil {
+	if cur = col.FindOne(ctx, f, opt); cur.Err() != nil {
 		err = cur.Err()
 		return
 	}
