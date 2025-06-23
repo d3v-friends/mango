@@ -36,6 +36,7 @@ const (
 	Skip         = "$skip"
 	Group        = "$group"
 	Sum          = "$sum"
+	All          = "$all"
 )
 
 // LookupSingle
