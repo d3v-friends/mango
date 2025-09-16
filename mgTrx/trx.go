@@ -2,6 +2,7 @@ package mgTrx
 
 import (
 	"context"
+
 	"github.com/d3v-friends/go-tools/fnError"
 	"github.com/d3v-friends/mango/mgCtx"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -12,9 +13,11 @@ const (
 	ErrInvalidResultType = "invalid_result_type"
 )
 
+type FnTrx[T any] = func(sessCtx mongo.SessionContext) (res T, err error)
+
 func Do[T any](
 	ctx context.Context,
-	fn func(sessCtx mongo.SessionContext) (T, error),
+	fn FnTrx[T],
 	opts ...*options.SessionOptions,
 ) (_ T, err error) {
 	var db *mongo.Database
