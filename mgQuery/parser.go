@@ -2,14 +2,15 @@ package mgQuery
 
 import (
 	"fmt"
+	"reflect"
+	"strings"
+
 	"github.com/d3v-friends/go-tools/fnCase"
 	"github.com/d3v-friends/go-tools/fnError"
 	"github.com/d3v-friends/go-tools/fnPointer"
 	"github.com/d3v-friends/mango/mgOp"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
-	"reflect"
-	"strings"
 )
 
 // 전제조건
@@ -252,49 +253,6 @@ func AppendFilterCompareArgs[T any](
 
 /* ------------------------------------------------------------------------------------------------------------ */
 
-// StringArgs 3개의 조건중 1개만 적용된다.
-// 순서 중요. 우선 적용은
-// 1) exact
-// 2) like
-// 3) in
-// 순서대로 제일 먼저 있는 값을 적용한다.
-type StringArgs interface {
-	GetExact() *string
-	GetLike() *string
-	GetIn() []string
-}
-
-func AppendFilterStringArgs(
-	filter bson.M,
-	key string,
-	args StringArgs,
-) bson.M {
-	if fnPointer.IsNil(args) {
-		return filter
-	}
-
-	if exact := args.GetExact(); !fnPointer.IsNil(exact) {
-		filter[key] = *exact
-		return filter
-	}
-
-	if like := args.GetLike(); !fnPointer.IsNil(like) {
-		filter[key] = bson.M{
-			mgOp.Regex: *like,
-		}
-		return filter
-	}
-
-	if in := args.GetIn(); len(in) != 0 {
-		filter[key] = bson.M{
-			mgOp.In: in,
-		}
-		return filter
-	}
-
-	return filter
-}
-
 type PagerArgs interface {
 	GetPage() int64
 	GetSize() int64
@@ -319,43 +277,40 @@ func AppendSorter(
 
 /* ------------------------------------------------------------------------------------------------------------ */
 
-// ArrayArgs 3개의 조건중 1개만 적용된다.
-// 순서 중요. 우선 적용은
-// 1) equal
-// 2) hasAll
-// 3) in
-// 순서대로 제일 먼저 있는 값을 적용한다.
-
-type ArrayArgs[T any] interface {
+type ValueArgs[T any] interface {
 	GetEqual() *T
 	GetIn() []T
 	GetHasAll() []T
+	GetNin() []T
 }
 
-func AppendFilterArrayArgs[T any](
-	filter bson.M,
-	key string,
-	args ArrayArgs[T],
-) bson.M {
+func AppendValueArgs[T any](filter bson.M, key string, args ValueArgs[T]) bson.M {
 	if fnPointer.IsNil(args) {
 		return filter
 	}
 
 	if equal := args.GetEqual(); !fnPointer.IsNil(equal) {
-		filter[key] = equal
+		filter[key] = *equal
 		return filter
 	}
 
-	var hasAll = args.GetHasAll()
-	if len(hasAll) != 0 {
-		filter[key] = hasAll
-		return filter
-	}
-
-	var in = args.GetIn()
-	if len(in) != 0 {
+	if in := args.GetIn(); 0 < len(in) {
 		filter[key] = bson.M{
 			mgOp.In: in,
+		}
+		return filter
+	}
+
+	if hasAll := args.GetHasAll(); 0 < len(hasAll) {
+		filter[key] = bson.M{
+			mgOp.All: hasAll,
+		}
+		return filter
+	}
+
+	if nin := args.GetNin(); 0 < len(nin) {
+		filter[key] = bson.M{
+			mgOp.Nin: nin,
 		}
 		return filter
 	}

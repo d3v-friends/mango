@@ -3,8 +3,8 @@ module github.com/d3v-friends/mango
 go 1.25.1
 
 require (
-	github.com/brianvoe/gofakeit/v7 v7.6.0
-	github.com/d3v-friends/go-tools v1.0.16
+	github.com/brianvoe/gofakeit/v7 v7.7.3
+	github.com/d3v-friends/go-tools v1.0.19
 	github.com/stretchr/testify v1.11.1
 	go.mongodb.org/mongo-driver v1.17.4
 )

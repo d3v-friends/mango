@@ -1,7 +1,7 @@
-github.com/brianvoe/gofakeit/v7 v7.6.0 h1:M3RUb5CuS2IZmF/cP+O+NdLxJEuDAZxNQBwPbbqR6h4=
-github.com/brianvoe/gofakeit/v7 v7.6.0/go.mod h1:QXuPeBw164PJCzCUZVmgpgHJ3Llj49jSLVkKPMtxtxA=
-github.com/d3v-friends/go-tools v1.0.16 h1:BC+FUdXu+8gOKWjc9oXGBaETj7WEmnMQLG6SZJpnl9g=
-github.com/d3v-friends/go-tools v1.0.16/go.mod h1:etTWr6v+LYicdA1ONo84Lj+txl+GwTi9X7WlHiAnv1s=
+github.com/brianvoe/gofakeit/v7 v7.7.3 h1:RWOATEGpJ5EVg2nN8nlaEyaV/aB4d6c3GqYrbqQekss=
+github.com/brianvoe/gofakeit/v7 v7.7.3/go.mod h1:QXuPeBw164PJCzCUZVmgpgHJ3Llj49jSLVkKPMtxtxA=
+github.com/d3v-friends/go-tools v1.0.19 h1:SBRDJ1ixqlv/Wye9QHEe1qW+1WziR6ICSsPm1CloY2k=
+github.com/d3v-friends/go-tools v1.0.19/go.mod h1:etTWr6v+LYicdA1ONo84Lj+txl+GwTi9X7WlHiAnv1s=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/golang/snappy v1.0.0 h1:Oy607GVXHs7RtbggtPBnr2RmDArIsAefDwvrdWvRhGs=
