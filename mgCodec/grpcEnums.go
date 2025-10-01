@@ -2,11 +2,11 @@ package mgCodec
 
 import (
 	"fmt"
+	"reflect"
+
 	"github.com/d3v-friends/go-tools/fnError"
-	"github.com/d3v-friends/go-tools/fnPointer"
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/bson/bsonrw"
-	"reflect"
 )
 
 const (
@@ -70,12 +70,7 @@ func (x *GrpcEnumCodec[E]) EncodeValue(
 ) (err error) {
 	var enum, isOk = val.Interface().(E)
 	if !isOk {
-		err = fnError.NewFields(
-			ErrFailEncodeEnums,
-			map[string]any{
-				"type": reflect.TypeOf(new(E)).Name(),
-			},
-		)
+		err = fnError.New(ErrFailEncodeEnums)
 		return
 	}
 
@@ -113,7 +108,7 @@ const (
 func ParseEnum[T GrpcEnum[T]](
 	m map[string]int32,
 	str string,
-) (res *T, err error) {
+) (res T, err error) {
 	var i, has = m[str]
 	if !has {
 		err = fnError.NewFields(
@@ -125,6 +120,6 @@ func ParseEnum[T GrpcEnum[T]](
 		)
 		return
 	}
-	res = fnPointer.Make((*new(T)).New(i))
+	res = (*new(T)).New(i)
 	return
 }

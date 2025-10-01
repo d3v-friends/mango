@@ -3,7 +3,6 @@ module github.com/d3v-friends/mango
 go 1.25.1
 
 require (
-	github.com/99designs/gqlgen v0.17.81
 	github.com/brianvoe/gofakeit/v7 v7.7.3
 	github.com/d3v-friends/go-tools v1.0.20
 	github.com/shopspring/decimal v1.4.0
@@ -14,13 +13,10 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/sosodev/duration v1.3.1 // indirect
-	github.com/vektah/gqlparser/v2 v2.5.30 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
