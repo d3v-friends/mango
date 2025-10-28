@@ -14,10 +14,8 @@ func Count[T mango.Model](
 	filter any,
 	opts ...*options.CountOptions,
 ) (_ int64, err error) {
-	var registry = mgCtx.GetRegistry(ctx)
-
 	var f any
-	if f, err = ParseFilter(filter, registry); err != nil {
+	if f, err = ParseFilter(filter); err != nil {
 		return
 	}
 
