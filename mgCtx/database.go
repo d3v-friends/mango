@@ -5,6 +5,7 @@ import (
 
 	"github.com/d3v-friends/go-tools/fnCtx"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func SetDB(ctx context.Context, db *mongo.Database) context.Context {
@@ -25,4 +26,12 @@ func GetClient(ctx context.Context) (_ *mongo.Client, err error) {
 		return
 	}
 	return db.Client(), nil
+}
+
+func GetSession(ctx context.Context, opts ...*options.SessionOptions) (_ mongo.Session, err error) {
+	var db *mongo.Database
+	if db, err = fnCtx.Get(ctx, ctxKeyMongoDB); err != nil {
+		return
+	}
+	return db.Client().StartSession(opts...)
 }
