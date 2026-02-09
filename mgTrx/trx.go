@@ -30,12 +30,6 @@ func Do[T any](
 		return
 	}
 
-	if err = session.StartTransaction(); err != nil {
-		return
-	}
-
-	defer session.EndSession(ctx)
-
 	var res any
 	if res, err = session.WithTransaction(ctx, func(sessCtx mongo.SessionContext) (interface{}, error) {
 		return fn(sessCtx)
