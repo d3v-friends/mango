@@ -2,6 +2,7 @@ package mgCtx
 
 import (
 	"context"
+
 	"github.com/d3v-friends/go-tools/fnCtx"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -16,4 +17,12 @@ func GetDB(ctx context.Context) (*mongo.Database, error) {
 
 func GetDBP(ctx context.Context) *mongo.Database {
 	return fnCtx.GetP(ctx, ctxKeyMongoDB)
+}
+
+func GetClient(ctx context.Context) (_ *mongo.Client, err error) {
+	var db *mongo.Database
+	if db, err = fnCtx.Get(ctx, ctxKeyMongoDB); err != nil {
+		return
+	}
+	return db.Client(), nil
 }
