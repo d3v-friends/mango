@@ -2,10 +2,12 @@ package mgQuery
 
 import (
 	"context"
+
 	"github.com/d3v-friends/go-tools/fnError"
 	"github.com/d3v-friends/mango"
 	"github.com/d3v-friends/mango/mgCtx"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 const (
@@ -18,6 +20,7 @@ const (
 func InsertOne[T mango.Model](
 	ctx context.Context,
 	model T,
+	opts ...*options.InsertOneOptions,
 ) (err error) {
 	var col *mongo.Collection
 
@@ -25,7 +28,7 @@ func InsertOne[T mango.Model](
 		return
 	}
 
-	if _, err = col.InsertOne(ctx, model); err != nil {
+	if _, err = col.InsertOne(ctx, model, opts...); err != nil {
 		return
 	}
 
@@ -35,6 +38,7 @@ func InsertOne[T mango.Model](
 func InsertMany[T mango.Model](
 	ctx context.Context,
 	models []T,
+	opts ...*options.InsertManyOptions,
 ) (err error) {
 	if len(models) == 0 {
 		err = fnError.New(ErrEmptyModels)
@@ -52,7 +56,7 @@ func InsertMany[T mango.Model](
 		return
 	}
 
-	if _, err = col.InsertMany(ctx, ls); err != nil {
+	if _, err = col.InsertMany(ctx, ls, opts...); err != nil {
 		return
 	}
 
