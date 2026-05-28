@@ -21,25 +21,21 @@ func InsertOne[T mango.Model](
 	ctx context.Context,
 	model T,
 	opts ...*options.InsertOneOptions,
-) (err error) {
+) (_ *mongo.InsertOneResult, err error) {
 	var col *mongo.Collection
 
 	if col, err = mgCtx.GetCol(ctx, model); err != nil {
 		return
 	}
 
-	if _, err = col.InsertOne(ctx, model, opts...); err != nil {
-		return
-	}
-
-	return
+	return col.InsertOne(ctx, model, opts...)
 }
 
 func InsertMany[T mango.Model](
 	ctx context.Context,
 	models []T,
 	opts ...*options.InsertManyOptions,
-) (err error) {
+) (_ *mongo.InsertManyResult, err error) {
 	if len(models) == 0 {
 		err = fnError.New(ErrEmptyModels)
 		return
@@ -56,9 +52,5 @@ func InsertMany[T mango.Model](
 		return
 	}
 
-	if _, err = col.InsertMany(ctx, ls, opts...); err != nil {
-		return
-	}
-
-	return
+	return col.InsertMany(ctx, ls, opts...)
 }
