@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/d3v-friends/go-tools/fnLogger"
-	"go.mongodb.org/mongo-driver/event"
+	"go.mongodb.org/mongo-driver/v2/event"
 )
 
 func NewMonitor(loggers ...fnLogger.Logger) *event.CommandMonitor {

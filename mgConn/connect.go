@@ -3,14 +3,14 @@ package mgConn
 import (
 	"context"
 	"fmt"
+
 	"github.com/d3v-friends/go-tools/fnPointer"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/bsoncodec"
-	"go.mongodb.org/mongo-driver/event"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readconcern"
-	"go.mongodb.org/mongo-driver/mongo/writeconcern"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/event"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo/readconcern"
+	"go.mongodb.org/mongo-driver/v2/mongo/writeconcern"
 )
 
 type ConnectArgs struct {
@@ -22,7 +22,7 @@ type ConnectArgs struct {
 	Monitor   *event.CommandMonitor
 }
 
-type CodecRegistry func(*bsoncodec.Registry) *bsoncodec.Registry
+type CodecRegistry func(*bson.Registry) *bson.Registry
 
 func (x *ConnectArgs) Opts() (opt *options.ClientOptions) {
 	opt = options.Client().
@@ -36,7 +36,8 @@ func (x *ConnectArgs) Opts() (opt *options.ClientOptions) {
 		SetBSONOptions(&options.BSONOptions{
 			UseLocalTimeZone: false,
 		}).
-		SetDirect(true)
+		SetDirect(true).
+		SetRegistry(bson.NewRegistry())
 
 	if x.LogOption != nil {
 		opt.SetLoggerOptions(x.LogOption)
@@ -45,8 +46,6 @@ func (x *ConnectArgs) Opts() (opt *options.ClientOptions) {
 	if x.Monitor != nil {
 		opt.SetMonitor(x.Monitor)
 	}
-
-	opt.Registry = bson.NewRegistry()
 
 	if len(x.Codec) != 0 {
 		for _, registry := range x.Codec {
@@ -57,7 +56,7 @@ func (x *ConnectArgs) Opts() (opt *options.ClientOptions) {
 	return
 }
 
-func NewRegistry(codecs ...CodecRegistry) (registry *bsoncodec.Registry) {
+func NewRegistry(codecs ...CodecRegistry) (registry *bson.Registry) {
 	registry = bson.NewRegistry()
 	for _, codecRegistry := range codecs {
 		registry = codecRegistry(registry)
@@ -84,7 +83,7 @@ func Connect(
 	ctx context.Context,
 	i *ConnectArgs,
 ) (client *mongo.Client, err error) {
-	if client, err = mongo.Connect(ctx, i.Opts()); err != nil {
+	if client, err = mongo.Connect(i.Opts()); err != nil {
 		return
 	}
 

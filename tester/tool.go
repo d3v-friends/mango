@@ -3,28 +3,34 @@ package tester
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"testing"
+	"time"
 
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/d3v-friends/go-tools/fnEnv"
 	"github.com/d3v-friends/go-tools/fnLogger"
-	"github.com/d3v-friends/mango/mgCodec"
-	"github.com/d3v-friends/mango/mgConn"
-	"github.com/d3v-friends/mango/mgCtx"
+	"github.com/d3v-friends/mango/v2/mgConn"
+	"github.com/d3v-friends/mango/v2/mgctx"
+	"github.com/d3v-friends/mango/v2/mgmigrate"
+	"github.com/d3v-friends/mango/v2/mgregistry"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readconcern"
-	"go.mongodb.org/mongo-driver/mongo/writeconcern"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo/readconcern"
+	"go.mongodb.org/mongo-driver/v2/mongo/writeconcern"
 )
 
+// Tool
+// mango 기능을 사용해서 툴을 만들면 안됀다.
+// 기능들을 테스트 하려면 기본 mongo-driver 기능만으로 만들어야 한다.
 type Tool struct {
 	DB *mongo.Database
 }
 
 func NewTool(t *testing.T) (tool *Tool) {
-	var err = fnEnv.Load("../.env")
-	assert.NoError(t, err)
-
 	tool = &Tool{}
 
 	var opt = options.Client().
@@ -44,11 +50,10 @@ func NewTool(t *testing.T) (tool *Tool) {
 
 	opt = mgConn.AppendRegistry(
 		opt,
-		mgCodec.DecimalRegistry,
+		mgregistry.DecimalRegistry,
 	)
 
-	var client *mongo.Client
-	client, err = mongo.Connect(context.TODO(), opt)
+	var client, err = mongo.Connect(opt)
 	assert.NoError(t, err)
 
 	tool.DB = client.Database(fnEnv.String("MONGO_DATABASE"))
@@ -59,6 +64,30 @@ func NewTool(t *testing.T) (tool *Tool) {
 func (x *Tool) Context() (ctx context.Context) {
 	ctx = context.TODO()
 	ctx = fnLogger.SetID(ctx)
-	ctx = mgCtx.SetDB(ctx, x.DB)
+	ctx = mgctx.SetDB(ctx, x.DB)
+	return
+}
+
+func (x *Tool) Truncate(t *testing.T) {
+	var err = x.DB.Drop(x.Context())
+	assert.NoError(t, err)
+}
+
+func (x *Tool) Migrate(t *testing.T, models ...mgmigrate.MigratedModel) {
+	models = append(models, Sample{})
+	assert.NoError(t, mgmigrate.Do(
+		x.Context(),
+		x.DB,
+		models...,
+	))
+}
+
+func (x *Tool) NewSample() (sample *Sample) {
+	sample = &Sample{
+		Id:        bson.NewObjectID(),
+		Name:      gofakeit.Name(),
+		Decimal:   decimal.NewFromInt(rand.Int63()),
+		CreatedAt: time.Now(),
+	}
 	return
 }
