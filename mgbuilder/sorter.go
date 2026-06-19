@@ -17,11 +17,11 @@ func Sorter(v any) bson.D {
 	case nil:
 		return bson.D{}
 	default:
-		return BsonD(v)
+		return bsonD(v)
 	}
 }
 
-func BsonD(v any) (sorter bson.D) {
+func bsonD(v any) (sorter bson.D) {
 	sorter = bson.D{}
 	var vo = reflect.ValueOf(v)
 	switch vo.Kind() {

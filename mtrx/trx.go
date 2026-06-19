@@ -5,34 +5,39 @@ import (
 
 	"github.com/d3v-friends/go-tools/fnError"
 	"github.com/d3v-friends/mango/v2/mgctx"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 const (
 	ErrInvalidResultType = "invalid_result_type"
 )
 
-type FnTrx[T any] = func(sessCtx mongo.SessionContext) (res T, err error)
+type FnTrx[T any] = func(ctx context.Context) (res T, err error)
 
 func Do[T any](
 	ctx context.Context,
 	fn FnTrx[T],
-	opts ...*options.SessionOptions,
+	opts ...*options.SessionOptionsBuilder,
 ) (_ T, err error) {
 	var db *mongo.Database
 	if db, err = mgctx.GetDB(ctx); err != nil {
 		return
 	}
 
-	var session mongo.Session
-	if session, err = db.Client().StartSession(opts...); err != nil {
+	var opt = options.Session()
+	if len(opts) == 1 {
+		opt = opts[0]
+	}
+
+	var session *mongo.Session
+	if session, err = db.Client().StartSession(opt); err != nil {
 		return
 	}
 
 	var res any
-	if res, err = session.WithTransaction(ctx, func(sessCtx mongo.SessionContext) (interface{}, error) {
-		return fn(sessCtx)
+	if res, err = session.WithTransaction(ctx, func(ctx context.Context) (interface{}, error) {
+		return fn(ctx)
 	}); err != nil {
 		return
 	}

@@ -17,12 +17,8 @@ func Filter(v any) bson.M {
 	case nil:
 		return bson.M{}
 	default:
-		return BsonM(v)
+		return convertToBsonM(bson.M{}, "", v)
 	}
-}
-
-func BsonM(v any) bson.M {
-	return convertToBsonM(bson.M{}, "", v)
 }
 
 type FilterArg interface {

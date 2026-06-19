@@ -4,18 +4,15 @@ go 1.26.3
 
 require (
 	github.com/brianvoe/gofakeit/v7 v7.15.0
-	github.com/d3v-friends/go-tools v1.0.47
+	github.com/d3v-friends/go-tools v1.0.49
 	github.com/shopspring/decimal v1.4.0
 	github.com/stretchr/testify v1.11.1
-	go.mongodb.org/mongo-driver v1.17.9
 	go.mongodb.org/mongo-driver/v2 v2.7.0
 )
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/golang/snappy v1.0.0 // indirect
 	github.com/klauspost/compress v1.18.6 // indirect
-	github.com/montanaflynn/stats v0.9.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect

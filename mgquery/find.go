@@ -18,15 +18,14 @@ func FindOne[T mango.Model](
 	sorter any,
 	opts ...*options.FindOneOptionsBuilder,
 ) (res *T, err error) {
-
-	var f = mgbuilder.BsonM(filter)
+	var f = mgbuilder.Filter(filter)
 
 	var o = options.FindOne()
 	if len(opts) == 1 {
 		o = opts[0]
 	}
 
-	var sort = mgbuilder.BsonD(sorter)
+	var sort = mgbuilder.Sorter(sorter)
 
 	if 0 < len(sort) {
 		o.SetSort(sort)
@@ -59,13 +58,13 @@ func Find[T mango.Model](
 	opts ...*options.FindOptionsBuilder,
 ) (res []*T, err error) {
 
-	var f = mgbuilder.BsonM(filter)
+	var f = mgbuilder.Filter(filter)
 
 	var o = options.Find()
 	if len(opts) == 1 {
 		o = opts[0]
 	}
-	var sort = mgbuilder.BsonD(sorter)
+	var sort = mgbuilder.Sorter(sorter)
 
 	if 0 < len(sort) {
 		o.SetSort(sort)
@@ -100,14 +99,16 @@ func FindOneAndUpdate[T mango.Model](
 	updater bson.M,
 	opts ...*options.FindOneAndUpdateOptionsBuilder,
 ) (res *T, err error) {
-	var f = mgbuilder.BsonM(filter)
+	var f = mgbuilder.Filter(filter)
 
 	var opt = options.FindOneAndUpdate()
+	opt.SetReturnDocument(options.After)
+
 	if len(opts) == 1 {
 		opt = opts[0]
 	}
 
-	var sort = mgbuilder.BsonD(sorter)
+	var sort = mgbuilder.Sorter(sorter)
 
 	if 0 < len(sort) {
 		opt.SetSort(sort)
@@ -149,7 +150,7 @@ func FindList[T mango.Model](
 	pager mgbuilder.PagerArgs,
 	opts ...*options.FindOptionsBuilder,
 ) (res *ModelList[T], err error) {
-	var f = mgbuilder.BsonM(filter)
+	var f = mgbuilder.Filter(filter)
 
 	var col *mongo.Collection
 	if col, err = mgctx.GetCol(ctx, *new(T)); err != nil {
@@ -166,7 +167,7 @@ func FindList[T mango.Model](
 		o = opts[0]
 	}
 
-	var sort = mgbuilder.BsonD(sorter)
+	var sort = mgbuilder.Sorter(sorter)
 
 	if 0 < len(sort) {
 		o.SetSort(sort)

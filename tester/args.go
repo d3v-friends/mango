@@ -5,6 +5,7 @@ import (
 
 	"github.com/d3v-friends/go-tools/fnPointer"
 	"github.com/d3v-friends/mango/v2/mgop"
+	"github.com/shopspring/decimal"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
@@ -173,6 +174,51 @@ func (x TimeArgs) Filter(filter bson.M, key string) bson.M {
 	}
 
 	if x.NotEqual != nil {
+		compare[mgop.Ne] = *x.NotEqual
+	}
+
+	if len(compare) == 0 {
+		return filter
+	}
+
+	filter[key] = compare
+
+	return filter
+}
+
+type DecimalArgs struct {
+	Gt       *decimal.Decimal `json:"gt,omitempty"`
+	Gte      *decimal.Decimal `json:"gte,omitempty"`
+	Lt       *decimal.Decimal `json:"lt,omitempty"`
+	Lte      *decimal.Decimal `json:"lte,omitempty"`
+	Equal    *decimal.Decimal `json:"equal,omitempty"`
+	NotEqual *decimal.Decimal `json:"notEqual,omitempty"`
+}
+
+func (x DecimalArgs) AppendFilter(filter bson.M, key string) bson.M {
+	var compare = bson.M{}
+
+	if !fnPointer.IsNil(x.Gt) {
+		compare[mgop.Gt] = *x.Gt
+	}
+
+	if !fnPointer.IsNil(x.Gte) {
+		compare[mgop.Gte] = *x.Gte
+	}
+
+	if !fnPointer.IsNil(x.Lt) {
+		compare[mgop.Lt] = *x.Lt
+	}
+
+	if !fnPointer.IsNil(x.Lte) {
+		compare[mgop.Lte] = *x.Lte
+	}
+
+	if !fnPointer.IsNil(x.Equal) {
+		compare[mgop.Eq] = *x.Equal
+	}
+
+	if !fnPointer.IsNil(x.NotEqual) {
 		compare[mgop.Ne] = *x.NotEqual
 	}
 

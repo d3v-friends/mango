@@ -2,10 +2,12 @@ package tester
 
 import (
 	"context"
+	"testing"
 	"time"
 
 	"github.com/d3v-friends/mango/v2/mgmigrate"
 	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
@@ -43,4 +45,27 @@ func (x Sample) GetColNm() string {
 
 func (x Sample) GetMigrates() mgmigrate.Steps {
 	return migrates
+}
+
+func (x Sample) IsSame(test *testing.T, v *Sample) {
+	assert.Equal(test, x.Id.Hex(), v.Id.Hex())
+	assert.Equal(test, x.Name, v.Name)
+	assert.Equal(test, x.Decimal.String(), v.Decimal.String())
+	assert.Equal(test, x.CreatedAt.Truncate(time.Millisecond).UTC(), v.CreatedAt.Truncate(time.Millisecond).UTC())
+}
+
+/* ---------------------------------------------------------------------- */
+
+type SampleFilter struct {
+	Id        *ObjectIdArgs
+	Name      *StringArgs
+	Decimal   *DecimalArgs
+	CreatedAt *TimeArgs
+}
+
+type SampleSorter struct {
+	Id        *Sorter
+	Name      *Sorter
+	Decimal   *Sorter
+	CreatedAt *Sorter
 }

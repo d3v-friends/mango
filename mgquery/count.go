@@ -25,7 +25,7 @@ func Count[T mango.Model](
 		opt = opts[0]
 	}
 
-	var f = mgbuilder.BsonM(filter)
+	var f = mgbuilder.Filter(filter)
 
 	return col.CountDocuments(ctx, f, opt)
 }

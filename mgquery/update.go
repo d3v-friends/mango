@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/d3v-friends/mango/v2"
+	"github.com/d3v-friends/mango/v2/mgbuilder"
 	"github.com/d3v-friends/mango/v2/mgctx"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -21,10 +22,7 @@ func UpdateOne[T mango.Model](
 		return
 	}
 
-	var f any
-	if f, err = ParseFilter(filter); err != nil {
-		return
-	}
+	var f = mgbuilder.Filter(filter)
 
 	var opt = options.UpdateOne()
 	if len(opts) == 1 {
@@ -49,10 +47,7 @@ func UpdateMany[T mango.Model](
 		return
 	}
 
-	var f any
-	if f, err = ParseFilter(filter); err != nil {
-		return
-	}
+	var f = mgbuilder.Filter(filter)
 
 	var opt = options.UpdateMany()
 	if len(opts) == 1 {

@@ -1,16 +1,14 @@
 package mgquery_test
 
 import (
-	"context"
 	"testing"
-	"time"
 
-	"github.com/brianvoe/gofakeit/v7"
-	"github.com/d3v-friends/mango/v2/mgmigrate"
+	"github.com/d3v-friends/go-tools/fnSlice"
+	"github.com/d3v-friends/mango/v2/mgop"
+	"github.com/d3v-friends/mango/v2/mgquery"
 	"github.com/d3v-friends/mango/v2/tester"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 func TestFind(test *testing.T) {
@@ -21,94 +19,65 @@ func TestFind(test *testing.T) {
 
 	test.Run("findOne", func(t *testing.T) {
 		var ctx = tool.Context()
+		var try = 10
+		var models = make([]*tester.Sample, try)
+		for i := 0; i < try; i++ {
+			models[i] = tool.NewSample()
+			var _, err = mgquery.InsertOne(ctx, models[i])
+			assert.NoError(t, err)
+		}
+
+		for _, model := range models {
+			var loaded, err = mgquery.FindOne[tester.Sample](
+				ctx,
+				bson.M{
+					tester.FieldId: model.Id,
+				},
+				nil,
+			)
+
+			assert.NoError(t, err)
+			model.IsSame(test, loaded)
+		}
+	})
+
+	test.Run("find", func(t *testing.T) {
+		var ctx = tool.Context()
+		var capacity = 50
+		var models = tool.NewSamples(capacity)
+		var _, err = mgquery.InsertMany(ctx, models)
+		assert.NoError(t, err)
+
+		var picked = fnSlice.PickRand(models, 20)
+		var ids = fnSlice.Each[*tester.Sample, bson.ObjectID](picked, func(v *tester.Sample) bson.ObjectID {
+			return v.Id
+		})
+
+		var loadedSamples []*tester.Sample
+		loadedSamples, err = mgquery.Find[tester.Sample](
+			ctx,
+			bson.M{
+				tester.FieldId: bson.M{
+					mgop.In: ids,
+				},
+			},
+			nil,
+			nil,
+		)
+
+		for _, model := range picked {
+			var sample *tester.Sample
+			sample, err = fnSlice.FindOne(loadedSamples, func(v *tester.Sample) bool {
+				return v.Id.Hex() == model.Id.Hex()
+			})
+			assert.NoError(t, err)
+
+			model.IsSame(test, sample)
+		}
+	})
+
+	test.Run("findList", func(t *testing.T) {
 
 	})
 
-}
-
-func CreateDummy(size int) (ls []*TestModel) {
-	ls = make([]*TestModel, size)
-	var now = time.Now()
-	for i := range ls {
-		ls[i] = &TestModel{
-			Id:        bson.NewObjectID(),
-			Name:      gofakeit.Username(),
-			Age:       gofakeit.Int64(),
-			CreatedAt: now.Add(time.Hour * -time.Duration(i)),
-		}
-	}
-	return
-}
-
-const (
-	TestModelColNm = "testModels"
-	FieldId        = "_id"
-	FieldName      = "name"
-	FieldAge       = "age"
-	FieldCreatedAt = "createdAt"
-)
-
-var migrates = mgmigrate.Steps{
-	func(ctx context.Context, col *mongo.Collection) (memo string, err error) {
-		memo = "init indexing"
-		_, err = col.Indexes().CreateMany(ctx, []mongo.IndexModel{
-			{
-				Keys: bson.D{
-					{Key: FieldName, Value: 1},
-				},
-			},
-			{
-				Keys: bson.D{
-					{Key: FieldAge, Value: 1},
-				},
-			},
-			{
-				Keys: bson.D{
-					{Key: FieldCreatedAt, Value: -1},
-				},
-			},
-		})
-		return
-	},
-}
-
-type TestModel struct {
-	Id        bson.ObjectID `bson:"_id"`
-	Name      string        `bson:"name"`
-	Age       int64         `bson:"age"`
-	CreatedAt time.Time     `bson:"createdAt"`
-}
-
-func (x TestModel) GetColNm() string {
-	return TestModelColNm
-}
-
-func (x TestModel) GetMigrates() mgmigrate.Steps {
-	return migrates
-}
-
-func (x TestModel) IsSame(test *testing.T, v TestModel) {
-	assert.Equal(test, x.Id, v.Id)
-	assert.Equal(test, x.Name, v.Name)
-	assert.Equal(test, x.Age, v.Age)
-	assert.Equal(test, x.CreatedAt.Truncate(time.Millisecond).UTC(), v.CreatedAt.Truncate(time.Millisecond).UTC())
-}
-
-type TestModelFilter struct {
-	Id        *tester.ObjectIdArgs
-	Name      *tester.StringArgs
-	Age       *tester.Int64Args
-	CreatedAt *tester.TimeArgs
-}
-
-type TestModelSorter struct {
-	Id        *tester.Sorter       `bson:"_id"`
-	Name      *tester.Sorter       `bson:"name"`
-	Age       *tester.Sorter       `bson:"age"`
-	CreatedAt *tester.Sorter       `bson:"createdAt"`
-	Data      *TestModelDataSorter `bson:"data"`
-}
-
-type TestModelDataSorter struct {
-	Title *tester.Sorter `bson:"title"`
 }

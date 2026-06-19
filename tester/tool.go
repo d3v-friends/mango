@@ -10,7 +10,7 @@ import (
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/d3v-friends/go-tools/fnEnv"
 	"github.com/d3v-friends/go-tools/fnLogger"
-	"github.com/d3v-friends/mango/v2/mgConn"
+	"github.com/d3v-friends/mango/v2/mgconn"
 	"github.com/d3v-friends/mango/v2/mgctx"
 	"github.com/d3v-friends/mango/v2/mgmigrate"
 	"github.com/d3v-friends/mango/v2/mgregistry"
@@ -43,12 +43,12 @@ func NewTool(t *testing.T) (tool *Tool) {
 			Username: fnEnv.String("MONGO_USERNAME"),
 			Password: fnEnv.String("MONGO_PASSWORD"),
 		}).
-		SetMonitor(mgConn.NewMonitor(fnLogger.NewLogger(fnLogger.LogLevelInfo))).
+		SetMonitor(mgconn.NewMonitor(fnLogger.NewLogger(fnLogger.LogLevelInfo))).
 		SetReadConcern(readconcern.Majority()).
 		SetWriteConcern(writeconcern.Majority()).
 		SetDirect(true)
 
-	opt = mgConn.AppendRegistry(
+	opt = mgconn.AppendRegistry(
 		opt,
 		mgregistry.DecimalRegistry,
 	)
@@ -90,4 +90,12 @@ func (x *Tool) NewSample() (sample *Sample) {
 		CreatedAt: time.Now(),
 	}
 	return
+}
+
+func (x *Tool) NewSamples(count int) []*Sample {
+	var samples = make([]*Sample, count)
+	for i := 0; i < count; i++ {
+		samples[i] = x.NewSample()
+	}
+	return samples
 }

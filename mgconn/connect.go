@@ -1,4 +1,4 @@
-package mgConn
+package mgconn
 
 import (
 	"context"
