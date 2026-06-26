@@ -64,7 +64,7 @@ func NewTool(t *testing.T) (tool *Tool) {
 func (x *Tool) Context() (ctx context.Context) {
 	ctx = context.TODO()
 	ctx = fnLogger.SetID(ctx)
-	ctx = mgctx.SetDB(ctx, x.DB)
+	ctx = mgctx.SetDatabase(ctx, x.DB)
 	return
 }
 

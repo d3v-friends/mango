@@ -16,7 +16,7 @@ func DeleteOne[T mango.Model](
 	opts ...*options.DeleteOneOptionsBuilder,
 ) (res *mongo.DeleteResult, err error) {
 	var col *mongo.Collection
-	if col, err = mgctx.GetCol(ctx, *new(T)); err != nil {
+	if col, err = mgctx.GetWriterCollection(ctx, *new(T)); err != nil {
 		return
 	}
 
@@ -40,7 +40,7 @@ func DeleteMany[T mango.Model](
 	opts ...*options.DeleteManyOptionsBuilder,
 ) (res *mongo.DeleteResult, err error) {
 	var col *mongo.Collection
-	if col, err = mgctx.GetCol(ctx, *new(T)); err != nil {
+	if col, err = mgctx.GetWriterCollection(ctx, *new(T)); err != nil {
 		return
 	}
 

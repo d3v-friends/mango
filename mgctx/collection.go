@@ -13,43 +13,61 @@ import (
 )
 
 const (
-	ctxKeyMongoDB fnCtx.Key[*mongo.Database] = "CTX_MONGO_DATABASE"
+	ctxKeyMongoDB       fnCtx.Key[*mongo.Database] = "CTX_MONGO_DATABASE"
+	ctxKeyReaderMongoDB fnCtx.Key[*mongo.Database] = "CTX_READER_MONGO_DATABASE"
+	ctxKeyWriterMongoDB fnCtx.Key[*mongo.Database] = "CTX_WRITER_MONGO_DATABASE"
 )
 
-func GetCol(ctx context.Context, name any) (col *mongo.Collection, err error) {
+func GetReaderCollection(ctx context.Context, name any) (col *mongo.Collection, err error) {
 	var db *mongo.Database
-	if db, err = GetDB(ctx); err != nil {
+	if db, err = GetReaderDB(ctx); err != nil {
 		return
 	}
 
+	var colName string
+	if colName, err = getCollectionName(name); err != nil {
+		return
+	}
+
+	col = db.Collection(colName)
+	return
+}
+
+func GetWriterCollection(ctx context.Context, name any) (col *mongo.Collection, err error) {
+	var db *mongo.Database
+	if db, err = GetWriterDB(ctx); err != nil {
+		return
+	}
+
+	var colName string
+	if colName, err = getCollectionName(name); err != nil {
+		return
+	}
+
+	col = db.Collection(colName)
+	return
+}
+
+func getCollectionName(name any) (res string, err error) {
 	switch t := name.(type) {
 	case string:
-		col = db.Collection(t)
+		res = t
 		return
 	case *string:
 		if !reflect.ValueOf(t).CanInterface() {
 			err = fnError.New(mgvalue.ErrInvalidNameType)
 			return
 		}
-
-		col = db.Collection(*t)
+		res = *t
 		return
 	case fmt.Stringer:
-		col = db.Collection(t.String())
+		res = t.String()
 		return
 	case mango.Model:
-		col = db.Collection(t.GetColNm())
+		res = t.GetColNm()
 		return
 	default:
 		err = fnError.New(mgvalue.ErrInvalidNameType)
 		return
 	}
-}
-
-func GetColP(ctx context.Context, name any) *mongo.Collection {
-	var col, err = GetCol(ctx, name)
-	if err != nil {
-		panic(err)
-	}
-	return col
 }

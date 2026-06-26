@@ -24,7 +24,7 @@ func InsertOne[T mango.Model](
 ) (_ *mongo.InsertOneResult, err error) {
 	var col *mongo.Collection
 
-	if col, err = mgctx.GetCol(ctx, model); err != nil {
+	if col, err = mgctx.GetWriterCollection(ctx, model); err != nil {
 		return
 	}
 
@@ -53,7 +53,7 @@ func InsertMany[T mango.Model](
 	}
 
 	var col *mongo.Collection
-	if col, err = mgctx.GetCol(ctx, models[0]); err != nil {
+	if col, err = mgctx.GetWriterCollection(ctx, models[0]); err != nil {
 		return
 	}
 

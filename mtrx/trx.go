@@ -21,7 +21,7 @@ func Do[T any](
 	opts ...*options.SessionOptionsBuilder,
 ) (_ T, err error) {
 	var db *mongo.Database
-	if db, err = mgctx.GetDB(ctx); err != nil {
+	if db, err = mgctx.GetDatabase(ctx); err != nil {
 		return
 	}
 

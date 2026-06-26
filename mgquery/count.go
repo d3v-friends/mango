@@ -15,10 +15,13 @@ func Count[T mango.Model](
 	filter any,
 	opts ...*options.CountOptionsBuilder,
 ) (_ int64, err error) {
-	var col *mongo.Collection
-	if col, err = mgctx.GetCol(ctx, *new(T)); err != nil {
+	var db *mongo.Database
+	if db, err = mgctx.GetReaderDB(ctx); err != nil {
 		return
 	}
+
+	var model = *new(T)
+	var col = db.Collection(model.GetColNm())
 
 	var opt = options.Count()
 	if len(opts) == 1 {

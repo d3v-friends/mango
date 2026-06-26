@@ -7,22 +7,32 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-func SetDB(ctx context.Context, db *mongo.Database) context.Context {
+func SetDatabase(ctx context.Context, db *mongo.Database) context.Context {
 	return fnCtx.Set(ctx, ctxKeyMongoDB, db)
 }
 
-func GetDB(ctx context.Context) (*mongo.Database, error) {
+func GetDatabase(ctx context.Context) (*mongo.Database, error) {
 	return fnCtx.Get(ctx, ctxKeyMongoDB)
 }
 
-func GetDBP(ctx context.Context) *mongo.Database {
-	return fnCtx.GetP(ctx, ctxKeyMongoDB)
-}
-
-func GetClient(ctx context.Context) (_ *mongo.Client, err error) {
-	var db *mongo.Database
-	if db, err = fnCtx.Get(ctx, ctxKeyMongoDB); err != nil {
+func GetReaderDB(ctx context.Context) (db *mongo.Database, err error) {
+	if db, err = fnCtx.Get(ctx, ctxKeyReaderMongoDB); err == nil {
 		return
 	}
-	return db.Client(), nil
+	return fnCtx.Get(ctx, ctxKeyMongoDB)
+}
+
+func GetWriterDB(ctx context.Context) (db *mongo.Database, err error) {
+	if db, err = fnCtx.Get(ctx, ctxKeyWriterMongoDB); err == nil {
+		return
+	}
+	return fnCtx.Get(ctx, ctxKeyMongoDB)
+}
+
+func SetReaderDB(ctx context.Context, db *mongo.Database) context.Context {
+	return fnCtx.Set(ctx, ctxKeyReaderMongoDB, db)
+}
+
+func SetWriterDB(ctx context.Context, db *mongo.Database) context.Context {
+	return fnCtx.Set(ctx, ctxKeyWriterMongoDB, db)
 }

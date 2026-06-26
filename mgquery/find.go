@@ -32,7 +32,7 @@ func FindOne[T mango.Model](
 	}
 
 	var col *mongo.Collection
-	if col, err = mgctx.GetCol(ctx, *new(T)); err != nil {
+	if col, err = mgctx.GetReaderCollection(ctx, *new(T)); err != nil {
 		return
 	}
 
@@ -75,7 +75,7 @@ func Find[T mango.Model](
 	}
 
 	var col *mongo.Collection
-	if col, err = mgctx.GetCol(ctx, *new(T)); err != nil {
+	if col, err = mgctx.GetReaderCollection(ctx, *new(T)); err != nil {
 		return
 	}
 
@@ -115,7 +115,7 @@ func FindOneAndUpdate[T mango.Model](
 	}
 
 	var col *mongo.Collection
-	if col, err = mgctx.GetCol(ctx, *new(T)); err != nil {
+	if col, err = mgctx.GetReaderCollection(ctx, *new(T)); err != nil {
 		return
 	}
 
@@ -153,7 +153,7 @@ func FindList[T mango.Model](
 	var f = mgbuilder.Filter(filter)
 
 	var col *mongo.Collection
-	if col, err = mgctx.GetCol(ctx, *new(T)); err != nil {
+	if col, err = mgctx.GetReaderCollection(ctx, *new(T)); err != nil {
 		return
 	}
 

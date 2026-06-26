@@ -3,7 +3,6 @@ package mgmigrate
 import (
 	"context"
 
-	"github.com/d3v-friends/mango/v2/mgctx"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
@@ -13,7 +12,6 @@ func Drop(
 	models ...MigratedModel,
 ) (err error) {
 	var ctx = context.TODO()
-	ctx = mgctx.SetDB(ctx, db)
 
 	for _, model := range models {
 		if err = db.

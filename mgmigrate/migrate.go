@@ -49,16 +49,18 @@ const (
 var migrates = Steps{
 	func(ctx context.Context, collection *mongo.Collection) (memo string, err error) {
 		memo = "init indexing"
-		_, err = collection.Indexes().CreateMany(ctx, []mongo.IndexModel{
-			{
-				Keys: bson.D{
-					{Key: FieldColNm, Value: 1},
+		_, err = collection.
+			Indexes().
+			CreateMany(ctx, []mongo.IndexModel{
+				{
+					Keys: bson.D{
+						{Key: FieldColNm, Value: 1},
+					},
+					Options: options.
+						Index().
+						SetUnique(true),
 				},
-				Options: options.
-					Index().
-					SetUnique(true),
-			},
-		})
+			})
 		return
 	},
 }
@@ -78,7 +80,7 @@ func Do(
 	db *mongo.Database,
 	models ...MigratedModel,
 ) (err error) {
-	ctx = mgctx.SetDB(ctx, db)
+	ctx = mgctx.SetDatabase(ctx, db)
 
 	var mangoModel = &Mango{}
 	models = reverseMigrateModels(append(models, mangoModel))
