@@ -1,6 +1,7 @@
 package mgbuilder
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"strings"
@@ -10,49 +11,50 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-func Sorter(v any) bson.D {
+type SortArgs interface {
+	GetDirection(ctx context.Context) int32
+}
+
+func Sorter(ctx context.Context, v any) bson.D {
 	switch t := v.(type) {
 	case bson.D:
 		return t
 	case nil:
 		return bson.D{}
 	default:
-		return bsonD(v)
-	}
-}
+		var sorter = bson.D{}
+		var vo = reflect.ValueOf(v)
+		switch vo.Kind() {
+		case reflect.Slice:
+			for i := 0; i < vo.Len(); i++ {
+				var field = vo.Index(i)
+				if !field.CanInterface() {
+					continue
+				}
 
-func bsonD(v any) (sorter bson.D) {
-	sorter = bson.D{}
-	var vo = reflect.ValueOf(v)
-	switch vo.Kind() {
-	case reflect.Slice:
-		for i := 0; i < vo.Len(); i++ {
-			var field = vo.Index(i)
-			if !field.CanInterface() {
-				continue
+				var elem bson.E
+				if elem = convertToBsonE(ctx, "", field.Interface()); elem.Key == "" {
+					continue
+				}
+				sorter = append(sorter, elem)
 			}
-
+		default:
 			var elem bson.E
-			if elem = convertToBsonE("", field.Interface()); elem.Key == "" {
-				continue
+			if elem = convertToBsonE(ctx, "", v); elem.Key == "" {
+				return sorter
 			}
 			sorter = append(sorter, elem)
 		}
-	default:
-		var elem bson.E
-		if elem = convertToBsonE("", v); elem.Key == "" {
-			return
-		}
-		sorter = append(sorter, elem)
+		return sorter
 	}
-	return
+
 }
 
-type SortArgs interface {
-	GetDirection() int32
-}
-
-func convertToBsonE(parent string, v any) (res bson.E) {
+func convertToBsonE(
+	ctx context.Context,
+	parent string,
+	v any,
+) (res bson.E) {
 	res = bson.E{}
 
 	if fnPointer.IsNil(v) {
@@ -71,14 +73,14 @@ func convertToBsonE(parent string, v any) (res bson.E) {
 	if isOk {
 		res = bson.E{
 			Key:   parent,
-			Value: f.GetDirection(),
+			Value: f.GetDirection(ctx),
 		}
 		return
 	}
 
 	switch vo.Kind() {
 	case reflect.Pointer:
-		return convertToBsonE(parent, vo.Elem().Interface())
+		return convertToBsonE(ctx, parent, vo.Elem().Interface())
 	case reflect.Struct:
 		for i := 0; i < vo.NumField(); i++ {
 			var field = vo.Field(i)
@@ -91,7 +93,7 @@ func convertToBsonE(parent string, v any) (res bson.E) {
 				key = fmt.Sprintf("%s.%s", parent, key)
 			}
 
-			if res = convertToBsonE(key, field.Interface()); res.Key == "" {
+			if res = convertToBsonE(ctx, key, field.Interface()); res.Key == "" {
 				continue
 			}
 			return

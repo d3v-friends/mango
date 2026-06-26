@@ -1,7 +1,7 @@
 github.com/brianvoe/gofakeit/v7 v7.15.0 h1:kGLYAWN8tnmxq2PelKVK6zwpM7kMxdz9SGPH31mFkNs=
 github.com/brianvoe/gofakeit/v7 v7.15.0/go.mod h1:QXuPeBw164PJCzCUZVmgpgHJ3Llj49jSLVkKPMtxtxA=
-github.com/d3v-friends/go-tools v1.0.49 h1:f7VuozoxlIwhQ68+IaGB0phzhkfK60x6TUKQDnOCaX0=
-github.com/d3v-friends/go-tools v1.0.49/go.mod h1:1+E8bgfqAJPxi/3wiey3+zJ35Sy7aM8yBGzo0g2QANE=
+github.com/d3v-friends/go-tools v1.0.50 h1:PGmx3r8CLSyxWRck1kQE0ACCW4S+HpV8BkpZARX2MXg=
+github.com/d3v-friends/go-tools v1.0.50/go.mod h1:1+E8bgfqAJPxi/3wiey3+zJ35Sy7aM8yBGzo0g2QANE=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=

@@ -1,6 +1,7 @@
 package mgbuilder
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"strings"
@@ -10,22 +11,32 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-func Filter(v any) bson.M {
+func Filter(ctx context.Context, v any) bson.M {
 	switch t := v.(type) {
 	case bson.M:
 		return t
 	case nil:
 		return bson.M{}
 	default:
-		return convertToBsonM(bson.M{}, "", v)
+		return convertToBsonM(
+			ctx,
+			bson.M{},
+			"",
+			v,
+		)
 	}
 }
 
 type FilterArg interface {
-	Filter(filter bson.M, key string) bson.M
+	Filter(ctx context.Context) any
 }
 
-func convertToBsonM(filter bson.M, parent string, v any) (_ bson.M) {
+func convertToBsonM(
+	ctx context.Context,
+	filter bson.M,
+	parent string,
+	v any,
+) (_ bson.M) {
 	if fnPointer.IsNil(v) {
 		return filter
 	}
@@ -42,13 +53,16 @@ func convertToBsonM(filter bson.M, parent string, v any) (_ bson.M) {
 
 	var f, isOk = v.(FilterArg)
 	if isOk {
-		filter = f.Filter(filter, parent)
+		var value = f.Filter(ctx)
+		if fnPointer.IsNotNil(value) {
+			filter[parent] = value
+		}
 		return filter
 	}
 
 	switch vo.Kind() {
 	case reflect.Pointer:
-		return convertToBsonM(filter, parent, vo.Elem().Interface())
+		return convertToBsonM(ctx, filter, parent, vo.Elem().Interface())
 	case reflect.Struct:
 		for i := 0; i < vo.NumField(); i++ {
 			var field = vo.Field(i)
@@ -61,7 +75,7 @@ func convertToBsonM(filter bson.M, parent string, v any) (_ bson.M) {
 				key = fmt.Sprintf("%s.%s", parent, key)
 			}
 
-			filter = convertToBsonM(filter, key, field.Interface())
+			filter = convertToBsonM(ctx, filter, key, field.Interface())
 		}
 
 		return filter

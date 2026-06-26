@@ -1,6 +1,7 @@
 package tester
 
 import (
+	"context"
 	"time"
 
 	"github.com/d3v-friends/go-tools/fnPointer"
@@ -10,26 +11,26 @@ import (
 )
 
 type ObjectIdArgs struct {
-	Gte *bson.ObjectID `bson:"gte"`
-	Eq  *bson.ObjectID `bson:"eq"`
+	Gte *bson.ObjectID
+	Eq  *bson.ObjectID
 }
 
-func (x *ObjectIdArgs) Filter(filter bson.M, key string) bson.M {
+func (x *ObjectIdArgs) Filter(_ context.Context) any {
 	var compare = bson.M{}
 
-	if !fnPointer.IsNil(x.Gte) {
-		compare["$gte"] = *x.Gte
+	if fnPointer.IsNotNil(x.Gte) {
+		compare[mgop.Gte] = *x.Gte
 	}
 
-	if !fnPointer.IsNil(x.Eq) {
-		compare["$eq"] = *x.Eq
+	if fnPointer.IsNotNil(x.Eq) {
+		compare[mgop.Eq] = *x.Eq
 	}
 
-	if len(compare) != 0 {
-		filter[key] = compare
+	if len(compare) == 0 {
+		return nil
 	}
 
-	return filter
+	return compare
 }
 
 type Sorter string
@@ -39,7 +40,7 @@ const (
 	SorterDESC Sorter = "DESC"
 )
 
-func (x Sorter) GetDirection() int32 {
+func (x Sorter) GetDirection(_ context.Context) int32 {
 	if x == SorterASC {
 		return 1
 	}
@@ -73,27 +74,25 @@ type StringArgs struct {
 	In    []string `json:"in,omitempty"`
 }
 
-func (x StringArgs) Filter(filter bson.M, key string) bson.M {
+func (x StringArgs) Filter(_ context.Context) any {
 	if x.Exact != nil {
-		filter[key] = *x.Exact
-		return filter
+		return *x.Exact
 	}
 
 	if x.Like != nil {
-		filter[key] = bson.M{
+		return bson.M{
 			mgop.Regex: *x.Like,
 		}
-		return filter
 	}
 
 	if 0 < len(x.In) {
-		filter[key] = bson.M{
+		return bson.M{
 			mgop.In: x.In,
 		}
-		return filter
+
 	}
 
-	return filter
+	return nil
 }
 
 type Int64Args struct {
@@ -105,7 +104,7 @@ type Int64Args struct {
 	NotEqual *int64 `json:"notEqual,omitempty"`
 }
 
-func (x Int64Args) Filter(filter bson.M, key string) bson.M {
+func (x Int64Args) Filter(_ context.Context) any {
 	var compare = bson.M{}
 
 	if x.Gt != nil {
@@ -133,12 +132,10 @@ func (x Int64Args) Filter(filter bson.M, key string) bson.M {
 	}
 
 	if len(compare) == 0 {
-		return filter
+		return nil
 	}
 
-	filter[key] = compare
-
-	return filter
+	return compare
 }
 
 type TimeArgs struct {
@@ -150,7 +147,7 @@ type TimeArgs struct {
 	NotEqual *time.Time `json:"notEqual,omitempty"`
 }
 
-func (x TimeArgs) Filter(filter bson.M, key string) bson.M {
+func (x TimeArgs) Filter(_ context.Context) any {
 	var compare = bson.M{}
 
 	if x.Gt != nil {
@@ -178,12 +175,10 @@ func (x TimeArgs) Filter(filter bson.M, key string) bson.M {
 	}
 
 	if len(compare) == 0 {
-		return filter
+		return nil
 	}
 
-	filter[key] = compare
-
-	return filter
+	return compare
 }
 
 type DecimalArgs struct {
@@ -195,38 +190,36 @@ type DecimalArgs struct {
 	NotEqual *decimal.Decimal `json:"notEqual,omitempty"`
 }
 
-func (x DecimalArgs) AppendFilter(filter bson.M, key string) bson.M {
+func (x DecimalArgs) Filter(_ context.Context) any {
 	var compare = bson.M{}
 
-	if !fnPointer.IsNil(x.Gt) {
+	if fnPointer.IsNotNil(x.Gt) {
 		compare[mgop.Gt] = *x.Gt
 	}
 
-	if !fnPointer.IsNil(x.Gte) {
+	if fnPointer.IsNotNil(x.Gte) {
 		compare[mgop.Gte] = *x.Gte
 	}
 
-	if !fnPointer.IsNil(x.Lt) {
+	if fnPointer.IsNotNil(x.Lt) {
 		compare[mgop.Lt] = *x.Lt
 	}
 
-	if !fnPointer.IsNil(x.Lte) {
+	if fnPointer.IsNotNil(x.Lte) {
 		compare[mgop.Lte] = *x.Lte
 	}
 
-	if !fnPointer.IsNil(x.Equal) {
+	if fnPointer.IsNotNil(x.Equal) {
 		compare[mgop.Eq] = *x.Equal
 	}
 
-	if !fnPointer.IsNil(x.NotEqual) {
+	if fnPointer.IsNotNil(x.NotEqual) {
 		compare[mgop.Ne] = *x.NotEqual
 	}
 
 	if len(compare) == 0 {
-		return filter
+		return nil
 	}
 
-	filter[key] = compare
-
-	return filter
+	return compare
 }

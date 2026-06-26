@@ -1,6 +1,7 @@
 package mgbuilder_test
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -22,7 +23,7 @@ func TestFilter(test *testing.T) {
 			},
 		}
 
-		var res = mgbuilder.Filter(filter)
+		var res = mgbuilder.Filter(context.TODO(), filter)
 		assert.Equal(t, true, reflect.DeepEqual(
 			res,
 			bson.M{

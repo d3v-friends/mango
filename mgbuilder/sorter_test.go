@@ -1,6 +1,7 @@
 package mgbuilder_test
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -27,7 +28,7 @@ func TestSorter(test *testing.T) {
 			},
 		}
 
-		var res = mgbuilder.Sorter(sorter)
+		var res = mgbuilder.Sorter(context.TODO(), sorter)
 		t.Logf("%+v", res)
 
 		assert.Equal(t, true, reflect.DeepEqual(

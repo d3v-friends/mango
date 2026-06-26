@@ -4,7 +4,7 @@ go 1.26.3
 
 require (
 	github.com/brianvoe/gofakeit/v7 v7.15.0
-	github.com/d3v-friends/go-tools v1.0.49
+	github.com/d3v-friends/go-tools v1.0.50
 	github.com/shopspring/decimal v1.4.0
 	github.com/stretchr/testify v1.11.1
 	go.mongodb.org/mongo-driver/v2 v2.7.0
