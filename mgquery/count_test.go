@@ -11,7 +11,6 @@ import (
 )
 
 func TestCount(test *testing.T) {
-	loadEnv(test)
 	var tool = tester.NewTool(test)
 	tool.Truncate(test)
 	tool.Migrate(test)

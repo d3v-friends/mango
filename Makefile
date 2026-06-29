@@ -1,4 +1,5 @@
 SHELL:=/bin/bash
+include .env
 
 up:
 	go get -u all
@@ -13,3 +14,5 @@ tag:
         git tag "$$TAG"; \
         git push --tags "$$ORIGIN" "$$TAG"; \
 	};
+test:
+	go test ./...;

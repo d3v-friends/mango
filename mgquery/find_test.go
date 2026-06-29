@@ -3,6 +3,7 @@ package mgquery_test
 import (
 	"testing"
 
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/d3v-friends/go-tools/fnSlice"
 	"github.com/d3v-friends/mango/v2/mgop"
 	"github.com/d3v-friends/mango/v2/mgquery"
@@ -12,7 +13,6 @@ import (
 )
 
 func TestFind(test *testing.T) {
-	loadEnv(test)
 	var tool = tester.NewTool(test)
 	tool.Truncate(test)
 	tool.Migrate(test)
@@ -77,7 +77,68 @@ func TestFind(test *testing.T) {
 	})
 
 	test.Run("findList", func(t *testing.T) {
+		tool.TruncateSampleCollection(t)
 
+		var ctx = tool.Context()
+		var capacity = 50
+		var models = tool.NewSamples(capacity)
+		var _, err = mgquery.InsertMany(ctx, models)
+		assert.NoError(t, err)
+
+		for i := 0; i < 5; i++ {
+			var list *mgquery.List[tester.Sample]
+			list, err = mgquery.FindList[tester.Sample](
+				ctx,
+				bson.M{
+					tester.FieldId: bson.M{
+						mgop.Exists: true,
+					},
+				},
+				bson.D{
+					{
+						Key:   tester.FieldId,
+						Value: 1,
+					},
+				},
+				tester.Pager{
+					Page: int64(i),
+					Size: 10,
+				},
+			)
+			assert.NoError(t, err)
+
+			for i2, model := range list.List {
+				var origin = models[i*10+i2]
+				model.IsSame(t, origin)
+			}
+		}
 	})
 
+	test.Run("findOneAndUpdate", func(t *testing.T) {
+		var ctx = tool.Context()
+
+		var model = tool.NewSample()
+		var _, err = mgquery.InsertOne(ctx, model)
+		assert.NoError(t, err)
+
+		var name = gofakeit.Name()
+		var updatedModel *tester.Sample
+		updatedModel, err = mgquery.FindOneAndUpdate[tester.Sample](
+			ctx,
+			bson.M{
+				tester.FieldId: model.Id,
+			},
+			nil,
+			bson.M{
+				mgop.Set: bson.M{
+					tester.FieldName: name,
+				},
+			},
+		)
+		assert.NoError(t, err)
+
+		assert.Equal(t, model.Id.Hex(), updatedModel.Id.Hex())
+		assert.Equal(t, name, updatedModel.Name)
+
+	})
 }

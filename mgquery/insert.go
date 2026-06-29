@@ -15,8 +15,6 @@ const (
 )
 
 // InsertOne
-// T 제네릭을 명시하지 않으면 new(T) 의 T 를 정확하게 인식 못한다. (golang 의 문제, 또는 golang 의 제네릭 이해의 문제)
-// 다른 query helper 들은 명시적으로 입력해야 제네릭타입의 new 가 가능함
 func InsertOne[T mango.Model](
 	ctx context.Context,
 	model T,

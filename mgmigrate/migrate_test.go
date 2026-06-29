@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/d3v-friends/go-tools/fnEnv"
 	"github.com/d3v-friends/mango/v2/mgmigrate"
 	"github.com/d3v-friends/mango/v2/tester"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +14,6 @@ import (
 const migrateMessage = "init indexing"
 
 func TestMigrate(test *testing.T) {
-	assert.NoError(test, fnEnv.Load(envPath))
 	var tool = tester.NewTool(test)
 
 	test.Run("migrate", func(t *testing.T) {
@@ -29,9 +27,14 @@ func TestMigrate(test *testing.T) {
 		assert.NoError(t, err)
 
 		var res *mongo.SingleResult
-		res = tool.DB.Collection(mgmigrate.ColNm).FindOne(ctx, bson.M{
-			mgmigrate.FieldColNm: MigrateTestModel{}.GetColNm(),
-		})
+		res = tool.DB.
+			Collection(mgmigrate.ColNm).
+			FindOne(
+				ctx,
+				bson.M{
+					mgmigrate.FieldColNm: MigrateTestModel{}.GetColNm(),
+				},
+			)
 
 		assert.NoError(t, res.Err())
 

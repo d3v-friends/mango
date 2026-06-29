@@ -20,7 +20,7 @@ func DeleteOne[T mango.Model](
 		return
 	}
 
-	var f = mgbuilder.Filter(filter)
+	var f = mgbuilder.Filter(ctx, filter)
 
 	var opt = options.DeleteOne()
 	if len(opts) == 1 {
@@ -44,7 +44,7 @@ func DeleteMany[T mango.Model](
 		return
 	}
 
-	var f = mgbuilder.Filter(filter)
+	var f = mgbuilder.Filter(ctx, filter)
 
 	var opt = options.DeleteMany()
 	if len(opts) == 1 {

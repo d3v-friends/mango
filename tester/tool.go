@@ -99,3 +99,10 @@ func (x *Tool) NewSamples(count int) []*Sample {
 	}
 	return samples
 }
+
+func (x *Tool) TruncateSampleCollection(t *testing.T) {
+	var ctx = x.Context()
+	var err = x.DB.Collection(ColNm).Drop(ctx)
+	assert.NoError(t, err)
+	x.Migrate(t, Sample{})
+}

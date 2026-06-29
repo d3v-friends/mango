@@ -7,6 +7,7 @@ import (
 	"github.com/d3v-friends/mango/v2"
 	"github.com/d3v-friends/mango/v2/mgbuilder"
 	"github.com/d3v-friends/mango/v2/mgctx"
+	"github.com/d3v-friends/mango/v2/mgvalue"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -18,14 +19,14 @@ func FindOne[T mango.Model](
 	sorter any,
 	opts ...*options.FindOneOptionsBuilder,
 ) (res *T, err error) {
-	var f = mgbuilder.Filter(filter)
+	var f = mgbuilder.Filter(ctx, filter)
 
 	var o = options.FindOne()
 	if len(opts) == 1 {
 		o = opts[0]
 	}
 
-	var sort = mgbuilder.Sorter(sorter)
+	var sort = mgbuilder.Sorter(ctx, sorter)
 
 	if 0 < len(sort) {
 		o.SetSort(sort)
@@ -58,13 +59,13 @@ func Find[T mango.Model](
 	opts ...*options.FindOptionsBuilder,
 ) (res []*T, err error) {
 
-	var f = mgbuilder.Filter(filter)
+	var f = mgbuilder.Filter(ctx, filter)
 
 	var o = options.Find()
 	if len(opts) == 1 {
 		o = opts[0]
 	}
-	var sort = mgbuilder.Sorter(sorter)
+	var sort = mgbuilder.Sorter(ctx, sorter)
 
 	if 0 < len(sort) {
 		o.SetSort(sort)
@@ -99,7 +100,7 @@ func FindOneAndUpdate[T mango.Model](
 	updater bson.M,
 	opts ...*options.FindOneAndUpdateOptionsBuilder,
 ) (res *T, err error) {
-	var f = mgbuilder.Filter(filter)
+	var f = mgbuilder.Filter(ctx, filter)
 
 	var opt = options.FindOneAndUpdate()
 	opt.SetReturnDocument(options.After)
@@ -108,7 +109,7 @@ func FindOneAndUpdate[T mango.Model](
 		opt = opts[0]
 	}
 
-	var sort = mgbuilder.Sorter(sorter)
+	var sort = mgbuilder.Sorter(ctx, sorter)
 
 	if 0 < len(sort) {
 		opt.SetSort(sort)
@@ -134,14 +135,12 @@ func FindOneAndUpdate[T mango.Model](
 	return
 }
 
-type ModelList[T any] struct {
+type List[T any] struct {
 	Page  int64
 	Size  int64
 	Total int64
 	List  []*T
 }
-
-const ErrNotFoundPagerArgs = "not_found_pager_args"
 
 func FindList[T mango.Model](
 	ctx context.Context,
@@ -149,8 +148,8 @@ func FindList[T mango.Model](
 	sorter any,
 	pager mgbuilder.PagerArgs,
 	opts ...*options.FindOptionsBuilder,
-) (res *ModelList[T], err error) {
-	var f = mgbuilder.Filter(filter)
+) (res *List[T], err error) {
+	var f = mgbuilder.Filter(ctx, filter)
 
 	var col *mongo.Collection
 	if col, err = mgctx.GetReaderCollection(ctx, *new(T)); err != nil {
@@ -167,16 +166,19 @@ func FindList[T mango.Model](
 		o = opts[0]
 	}
 
-	var sort = mgbuilder.Sorter(sorter)
+	var sort = mgbuilder.Sorter(ctx, sorter)
 
 	if 0 < len(sort) {
 		o.SetSort(sort)
 	}
 
 	if pager == nil {
-		err = fnError.NewFields(ErrNotFoundPagerArgs, map[string]any{
-			"filter": filter,
-		})
+		err = fnError.NewFields(
+			mgvalue.ErrNotFoundPagerArgs,
+			map[string]any{
+				"filter": filter,
+			},
+		)
 		return
 	}
 
@@ -193,7 +195,7 @@ func FindList[T mango.Model](
 		return
 	}
 
-	res = &ModelList[T]{
+	res = &List[T]{
 		Page:  pager.GetPage(),
 		Size:  pager.GetSize(),
 		Total: total,

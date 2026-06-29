@@ -13,7 +13,6 @@ import (
 )
 
 func TestDelete(test *testing.T) {
-	loadEnv(test)
 	var tool = tester.NewTool(test)
 
 	test.Run("deleteOne", func(t *testing.T) {

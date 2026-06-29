@@ -16,20 +16,20 @@ func UpdateOne[T mango.Model](
 	filter any,
 	updater bson.M,
 	opts ...*options.UpdateOneOptionsBuilder,
-) (err error) {
+) (res *mongo.UpdateResult, err error) {
 	var col *mongo.Collection
 	if col, err = mgctx.GetWriterCollection(ctx, *new(T)); err != nil {
 		return
 	}
 
-	var f = mgbuilder.Filter(filter)
+	var f = mgbuilder.Filter(ctx, filter)
 
 	var opt = options.UpdateOne()
 	if len(opts) == 1 {
 		opt = opts[0]
 	}
 
-	if _, err = col.UpdateOne(ctx, f, updater, opt); err != nil {
+	if res, err = col.UpdateOne(ctx, f, updater, opt); err != nil {
 		return
 	}
 
@@ -41,20 +41,20 @@ func UpdateMany[T mango.Model](
 	filter any,
 	updater bson.M,
 	opts ...*options.UpdateManyOptionsBuilder,
-) (err error) {
+) (res *mongo.UpdateResult, err error) {
 	var col *mongo.Collection
 	if col, err = mgctx.GetWriterCollection(ctx, *new(T)); err != nil {
 		return
 	}
 
-	var f = mgbuilder.Filter(filter)
+	var f = mgbuilder.Filter(ctx, filter)
 
 	var opt = options.UpdateMany()
 	if len(opts) == 1 {
 		opt = opts[0]
 	}
 
-	if _, err = col.UpdateMany(ctx, f, updater, opt); err != nil {
+	if res, err = col.UpdateMany(ctx, f, updater, opt); err != nil {
 		return
 	}
 
