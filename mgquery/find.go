@@ -149,7 +149,16 @@ func FindList[T mango.Model](
 	pager mgbuilder.PagerArgs,
 	opts ...*options.FindOptionsBuilder,
 ) (res *List[T], err error) {
-	var f = mgbuilder.Filter(ctx, filter)
+	var list *ListWithoutTotal[T]
+	if list, err = FindListWithoutTotal[T](
+		ctx,
+		filter,
+		sorter,
+		pager,
+		opts...,
+	); err != nil {
+		return
+	}
 
 	var col *mongo.Collection
 	if col, err = mgctx.GetReaderCollection(ctx, *new(T)); err != nil {
@@ -157,7 +166,40 @@ func FindList[T mango.Model](
 	}
 
 	var total int64
-	if total, err = col.CountDocuments(ctx, f); err != nil {
+	if total, err = col.CountDocuments(
+		ctx,
+		mgbuilder.Filter(ctx, filter),
+	); err != nil {
+		return
+	}
+
+	res = &List[T]{
+		Page:  pager.GetPage(),
+		Size:  pager.GetSize(),
+		Total: total,
+		List:  list.List,
+	}
+
+	return
+}
+
+type ListWithoutTotal[T any] struct {
+	Page int64
+	Size int64
+	List []*T
+}
+
+func FindListWithoutTotal[T mango.Model](
+	ctx context.Context,
+	filter any,
+	sorter any,
+	pager mgbuilder.PagerArgs,
+	opts ...*options.FindOptionsBuilder,
+) (res *ListWithoutTotal[T], err error) {
+	var f = mgbuilder.Filter(ctx, filter)
+
+	var col *mongo.Collection
+	if col, err = mgctx.GetReaderCollection(ctx, *new(T)); err != nil {
 		return
 	}
 
@@ -195,11 +237,10 @@ func FindList[T mango.Model](
 		return
 	}
 
-	res = &List[T]{
-		Page:  pager.GetPage(),
-		Size:  pager.GetSize(),
-		Total: total,
-		List:  list,
+	res = &ListWithoutTotal[T]{
+		Page: pager.GetPage(),
+		Size: pager.GetSize(),
+		List: list,
 	}
 
 	return

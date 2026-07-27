@@ -34,4 +34,15 @@ func TestFilter(test *testing.T) {
 		))
 		t.Logf("%v\n", res)
 	})
+
+	test.Run("filter_nil", func(t *testing.T) {
+		var filter = &Filter{}
+
+		var res = mgbuilder.Filter(context.TODO(), filter)
+		assert.Equal(t, true, reflect.DeepEqual(
+			res,
+			bson.M{},
+		))
+		t.Logf("%v\n", res)
+	})
 }
