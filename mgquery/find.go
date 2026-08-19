@@ -166,11 +166,18 @@ func FindList[T mango.Model](
 	}
 
 	var total int64
-	if total, err = col.CountDocuments(
-		ctx,
-		mgbuilder.Filter(ctx, filter),
-	); err != nil {
-		return
+	var f = mgbuilder.Filter(ctx, filter)
+	if len(f) == 0 {
+		if total, err = col.EstimatedDocumentCount(ctx); err != nil {
+			return
+		}
+	} else {
+		if total, err = col.CountDocuments(
+			ctx,
+			f,
+		); err != nil {
+			return
+		}
 	}
 
 	res = &List[T]{
